@@ -94,7 +94,11 @@ def ranks_by_height(M,N):
     return (output,problems)
 
 def list_to_array(L):
-    X = np.array([[C[1],C[2]] for C in L])
+    X = np.array([[C[-2],C[-1]] for C in L])
+    return X
+
+def list_to_array_with_coeffs(L):
+    X = np.array([[C[0].a4(),C[0].a6(),C[1],C[2]] for C in L])
     return X
 
 def average_ranks(L):
@@ -107,6 +111,20 @@ def average_ranks(L):
 
     Z = np.vstack([X[I],Y[I]]).T
     return Z
+
+def rank_list(N):
+    L1,L2 = ranks_by_height(0,N)
+    X = list_to_array_with_coeffs(L1)
+    np.savetxt('rank_list_1m.txt',X)
+    Y = np.array([[C[0].a4(),C[0].a6(),C[1]] for C in L2])
+    np.savetxt('rank_problems.txt',Y)
+
+def selmer_list(N):
+    L1,L2 = two_selmer_size_by_height(0,N)
+    X = list_to_array_with_coeffs(L1)
+    np.savetxt('selmer_list_1m.txt',X)
+    Y = np.array([[C[0].a4(),C[0].a6(),C[1]] for C in L2])
+    np.savetxt('selmer_problems.txt',Y)
 
 def crunch_ranks(N):
     L1,L2 = ranks_by_height(0,N)
