@@ -115,3 +115,23 @@ def height_iterator_three_torsion(M,N):
 
 def height_iterator_full_weierstrass(M,N):
     raise NotImplementedError("Not yet implemented.")
+
+
+def coefficients_from_height(H,coeffs,indices,model):
+
+    L = []
+
+    for S in list(powerset(indices))[1:]:
+        B = []
+        for j in range(len(coeffs)):
+	    if j in S:
+                B.append([-coeffs[j],coeffs[j]])
+            elif j in indices:
+                B.append(srange(-coeffs[j]+1,coeffs[j]))
+	    else:
+                B.append(srange(-coeffs[j],coeffs[j]+1))
+        C = CartesianProduct(*B).list()
+        for c in C:
+            L.append([H,c])
+    
+    return L
