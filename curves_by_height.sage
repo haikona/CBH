@@ -1,6 +1,7 @@
 # A more systematic attempt at code for generating statistics of invariants
 # of elliptic curves ordered by height.
 
+<<<<<<< HEAD
 def height_iterator(M,N,model):
     if model == "short_weierstrass":
        	return height_iterator_short_weierstrass(M,N)
@@ -135,3 +136,153 @@ def coefficients_from_height(H,coeffs,indices,model):
             L.append([H,c])
     
     return L
+=======
+from sage.interfaces.all import magma
+import time
+
+def set_magma_class_group_bounds(proof = True):
+    if proof == False:
+        magma.eval('SetClassGroupBounds("GRH")')
+    elif proof == True:
+        magma.eval('SetClassGroupBounds("PARI")')
+
+def data_by_height(cbh, invariant = 'two_selmer', proof = True):
+#INPUT: cbh = List of (height,(a1,a2,a3,a4,a6))
+#       invariant = 'rank', 'two_selmer_rank', 'two_selmer_size', 'two_torison_rank', 'reduced_two_selmer_rank', 'three_selmer_rank', 'three_selmer_size', 'three_torsion_rank', or 'reduced_three_selmer_rank'
+#OUTPUT: List of (height,(a1,a2,a3,a4,a6),invariant)
+    
+    t=time.time()
+    output = []
+    problems = []
+    if invariant == 'rank':
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                output.append((C[0],C[1],E.rank(use_database=True, only_use_mwrank = False)))
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+    
+    elif invariant == 'two_selmer_rank':
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                output.append((C[0],C[1],E.selmer_rank())
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+    
+    elif invariant == 'two_selmer_size':
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                output.append((C[0],C[1],2^(E.selmer_rank()))
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+    
+    elif invariant == 'two_torsion_rank':
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                output.append((C[0],C[1],E.two_torsion_rank())
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+    
+
+    elif invariant == 'reduced_two_selmer_rank':
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                output.append((C[0],C[1],E.selmer_rank()-E.two_torsion_rank())
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+    
+    elif invariant == 'reduced_two_selmer_size':
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                output.append((C[0],C[1],2^(E.selmer_rank()-E.two_torsion_rank()))
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+    
+    elif invariant == 'three_selmer_rank':
+        set_magma_class_group_bounds(proof)
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                output.append((C[0],C[1],E.three_selmer_rank())
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+
+    elif invariant == 'three_selmer_size':
+        set_magma_class_group_bounds(proof)
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                output.append((C[0],C[1],3^(E.three_selmer_rank()))
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+    
+    #Below we assume the ground field doesn't contain cube roots of unity.
+    
+    elif invariant == 'three_torsion_rank':
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                ntors = E.torsion_order()
+                if ntors % 3 == 0:
+                    output.append((C[0],C[1],1)
+                else:
+                    output.append((C[0],C[1],0)
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+    
+    elif invariant == 'reduced_three_selmer_rank':
+        set_magma_class_group_bounds(proof)
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                ntors = E.torsion_order()
+                if ntors % 3 == 0:
+                    output.append((C[0],C[1],E.three_selmer_rank() - 1)
+                else:
+                    output.append((C[0],C[1],E.three_selmer_rank())
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+    
+    elif invariant == 'reduced_three_selmer_rank':
+        set_magma_class_group_bounds(proof)
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                ntors = E.torsion_order()
+                if ntors % 3 == 0:
+                    output.append((C[0],C[1],3^(E.three_selmer_rank() - 1))
+                else:
+                    output.append((C[0],C[1],3^(E.three_selmer_rank()))
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
+    
+    else:
+        raise NotImplementedError('Invariant not yet Implemented')
+>>>>>>> data_by_height
