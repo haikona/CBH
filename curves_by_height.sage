@@ -1,7 +1,9 @@
 # A more systematic attempt at code for generating statistics of invariants
 # of elliptic curves ordered by height.
 
-<<<<<<< HEAD
+from sage.interfaces.all import magma
+import time
+
 def height_iterator(M,N,model):
     if model == "short_weierstrass":
        	return height_iterator_short_weierstrass(M,N)
@@ -136,9 +138,7 @@ def coefficients_from_height(H,coeffs,indices,model):
             L.append([H,c])
     
     return L
-=======
-from sage.interfaces.all import magma
-import time
+
 
 def set_magma_class_group_bounds(proof = True):
     if proof == False:
@@ -285,4 +285,3 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
     
     else:
         raise NotImplementedError('Invariant not yet Implemented')
->>>>>>> data_by_height
