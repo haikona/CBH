@@ -155,7 +155,7 @@ def avg_h1_selmer(M,N):
             output.append((E,C[1],E.selmer_rank()))
         except:
             problems.append((C[0]))
-    print('Average Selmer size is ', (sum([2^c[2] for c in output])/len(output)).n())
+    print('Average 2-Selmer size is ', (sum([2^c[2] for c in output])/len(output)).n())
     print(time.time()-t)
     return(output,problems)
 
