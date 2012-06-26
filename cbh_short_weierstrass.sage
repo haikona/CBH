@@ -3,6 +3,7 @@ import numpy as np
 
 def height_iterator(M,N):
     L = []
+
     a = floor((M/4)^(1/3))
     b = floor((M/27)^(1/2))
     H = max([4*a^3,27*b^2])
