@@ -43,7 +43,69 @@ def height_iterator_short_weierstrass(M,N):
     return L
 
 def height_iterator_rank_one(M,N):
-    raise NotImplementedError("Not yet implemented.")
+    L = []
+
+    x2 = floor(M^(1/6))
+    x3 = floor(M^(1/4))
+    x4 = floor((M)^(1/3))
+
+    H = max([x2^6,x3^4,x4^3])
+    while H <= N:
+        y2 = (x2+1)^6
+        y3 = (x3+1)^4
+        y4 = (x4+1)^3
+        yl = [y2,y3,y4]
+        if min([y2,y3,y4]) > N:
+            break
+        if y2 < min(y3,y4):
+            x2 += 1
+            H = y2
+            x3bound = floor((H)^(1/4))
+            x4bound = floor((H)^(1/3))
+            L.append((H,[x2,x3bound,x4bound],[0]))
+
+        if y3 < min(y2,y4):
+            x3 += 1
+            H = y3
+            x2bound = floor((H)^(1/6))
+            x4bound = floor((H)^(1/3))
+            L.append((H,[x2bound,x3,x4bound],[1]))
+
+        if y4 < min(y2,y3):
+            x4 += 1
+            H = y4
+            x2bound = floor((H)^(1/6))
+            x3bound = floor((H)^(1/4))
+            L.append((H,[x2bound,x3bound,x4],[2]))
+            
+        if y2 == y3 and y2 < y4:
+            x2 += 1
+            x3 += 1
+            H = y2
+            x4bound = floor((H)^(1/3))
+            L.append((H,[x2,x3,x4bound],[0,1]))
+            
+        if y2 == y4 and y2 < y3:
+            x2 += 1
+            x4 += 1
+            H = y2
+            x3bound = floor((H)^(1/4))
+            L.append((H,[x2,x3bound,x4],[0,2]))
+           
+        if y3 == y4 and y3 < y2:
+            x3 += 1
+            x4 += 1
+            H = y2
+            x2bound = floor((H)^(1/6))
+            L.append((H,[x2bound,x2,x4],[1,2]))
+
+        if y2 == y3 and y2 == y4:
+            x2 += 1
+            x3 += 1
+            x4 += 1
+            H = y2
+            L.append((H,[x2,x3,x4],[0,1,2]))
+    return L
 
 def height_iterator_two_torsion(M,N):
     raise NotImplementedError("Not yet implemented.")
