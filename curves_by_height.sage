@@ -118,7 +118,31 @@ def height_iterator_rank_two(M,N):
     raise NotImplementedError("Not yet implemented.")
 
 def height_iterator_two_torsion(M,N):
-    raise NotImplementedError("Not yet implemented.")
+    L = []
+    x2 = floor((M)^(1/6))
+    x4 = floor((M)^(1/3))
+    H = max([x2^6,x4^3])
+    while H <= N:
+        y2 = (x2+1)^6
+        y4 = (x4+1)^3
+        if min([y2,y4]) > N:
+            break
+        if y2 < y4:
+            x2 += 1
+            H = y2
+            x4bound = floor((H)^(1/3))
+            L.append((H,[x2,x4bound],[0]))
+        if y4 < y2:
+            x4 += 1
+            H = y4
+            x2bound = floor((H)^(1/6))
+            L.append((H,[x2bound,x4],[1]))
+        if y2 == y4:
+            x2 += 1
+            x4 += 1
+            H = y2
+            L.append((H,[x2,x4],[0,1]))
+    return L
 
 def height_iterator_three_torsion(M,N):
     raise NotImplementedError("Not yet implemented.")
@@ -143,27 +167,29 @@ def coefficients_from_height(H,coeffs,indices,model):
             L.append(c)
 
     L2 = []
+    for c in L:
+        C = coeffs_to_a_invariants(c,model)
+        if not is_singular(C):
+            L2.append((H,C))
+    return L2
+
+
+def coeffs_to_a_invariants(c,model):
     if model == "short_weierstrass":
-        for c in L:
-            C = [0,0,0,c[0],c[1]]
-            if not is_singular(C):
-                L2.append((H,C))
+        C = [0,0,0,c[0],c[1]]
     elif model == "rank_one":
-        for c in L:
-            C = [0,c[0],c[1],c[2],0]
-            if not is_singular(C):
-                L2.append((H,C))
+        C = [0,c[0],c[1],c[2],0]
     elif model == "rank_two":
         raise NotImplementedError("Not yet implemented.")
     elif model == "two_torsion":
-        raise NotImplementedError("Not yet implemented.")
+        C = [0,c[0],0,c[1],0]
     elif model == "three_torsion":
         raise NotImplementedError("Not yet implemented.")
     elif model == "full_weierstrass":
         raise NotImplementedError("Not yet implemented.")
     else: raise IOError("Please enter recognized Weierstrass family of curves.")
 
-    return L2
+    return C
 
 def is_singular(C):
     a1 = C[0]
