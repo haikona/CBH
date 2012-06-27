@@ -1,3 +1,4 @@
+
 # A more systematic attempt at code for generating statistics of invariants
 # of elliptic curves ordered by height.
 
@@ -115,7 +116,141 @@ def height_iterator_rank_one(M,N):
     return L
 
 def height_iterator_rank_two(M,N):
-    raise NotImplementedError("Not yet implemented.")
+    L = []
+    x2 = floor(M^(1/6))
+    x4 = floor((M)^(1/3))
+    xp4 = floor((M)^(1/3))
+    x6 = floor((M)^(1/2))
+    H = max([x2^6,x4^3,xp4^3,x6^2])
+    while H <= N:
+        y2 = (x2+1)^6        
+        y4 = (x4+1)^3
+        yp4 = (xp4+1)^3
+        y6 = (x6+1)^2        
+        yl = [y2,y4,yp4,y6]
+        if min(yl) > N:
+            break
+
+        if y2 < min(y4,yp4,y6):
+            x2 += 1
+            H = y2
+            x4bound = floor((H)^(1/3))
+            xp4bound = floor((H)^(1/3))
+            x6bound = floor((H)^(1/2))
+            L.append((H,(x2,x4bound,xp4bound,x6bound),[0]))
+
+        if y4 < min(y2,yp4,y6):
+            x4 += 1
+            H = y4
+            x2bound = floor((H)^(1/6))
+            xp4bound = floor((H)^(1/3))
+            x6bound = floor((H)^(1/2))
+            L.append((H,(x2bound,x4,xp4bound,x6bound),[1]))
+
+        if yp4 < min(y2,y4,y6):
+            xp4 += 1
+            H = yp4
+            x2bound = floor((H)^(1/6))
+            x4bound = floor((H)^(1/3))
+            x6bound = floor((H)^(1/2))
+            L.append((H,(x2bound,x4bound,xp4,x6bound),[2]))
+
+        if y6 < min(y2,y4,yp4):
+            x6 += 1
+            H = y6
+            x2bound = floor((H)^(1/6))
+            x4bound = floor((H)^(1/3))
+            xp4bound = floor((H)^(1/3))
+            L.append((H,(x2bound,x4bound,xp4bound,x6),[3]))
+
+        if y2 == y4 and y2 < min(yp4,y6):
+            x2 += 1
+            x4 += 1
+            H = y2
+            xp4bound = floor((H)^(1/3))
+            x6bound = floor((H)^(1/2))
+            L.append((H,(x2,x4,xp4bound,x6bound),[0,1]))
+
+        if y2 == yp4 and y2 < min(y4,y6):
+            x2 += 1
+            xp4 += 1
+            H = y2
+            x4bound = floor((H)^(1/3))
+            x6bound = floor((H)^(1/2))
+            L.append((H,(x2,x4bound,xp4,x6bound),[0,2]))
+
+        if y2 == y6 and y2 < min(y4,yp4):
+            x2 += 1
+            x6 += 1
+            H = y2
+            x4bound = floor((H)^(1/3))
+            xp4bound = floor((H)^(1/3))
+            L.append((H,(x2,x4bound,xp4bound,x6),[0,3]))
+
+        if y4 == yp4 and y4 < min(y2,y6):
+            x4 += 1
+            xp4 += 1
+            H = y4
+            x2bound = floor((H)^(1/6))
+            x6bound = floor((H)^(1/2))
+            L.append((H,(x2bound,x4,xp4,x6bound),[1,2]))
+
+        if y4 == y6 and y4 < min(y2,yp4):
+            x4 += 1
+            x6 += 1
+            H = y4
+            x2bound = floor((H)^(1/6))
+            xp4bound = floor((H)^(1/3))
+            L.append((H,(x2bound,x4,xp4bound,x6),[1,3]))
+
+        if yp4 == y6 and yp4 < min(y2,y4):
+            xp4 += 1
+            x6 += 1
+            H = y4
+            x2bound = floor((H)^(1/6))
+            x4bound = floor((H)^(1/3))
+            L.append((H,(x2bound,x4bound,xp4,x6),[2,3]))
+
+        if y2 == y4 and y4 == yp4 and y2 < y6:
+            x2 += 1
+            x4 += 1
+            xp4 += 1
+            H = y2
+            x6bound = floor((H)^(1/2))
+            L.append((H,(x2,x4,xp4,x6bound),[0,1,2]))
+
+        if y2 == y4 and y4 == y6 and y2 < yp4:
+            x2 += 1
+            x4 += 1
+            x6 += 1
+            H = y2
+            xp4bound = floor((H)^(1/3))
+            L.append((H,(x2,x4,xp4bound,x6),[0,1,3]))
+
+        if y2 == yp4 and y2 == y6 and y2 < y4:
+            x2 += 1
+            xp4 += 1
+            x6 += 1
+            H = y2
+            x4bound = floor((H)^(1/3))
+            L.append((H,(x2,x4bound,x4,x6),[0,2,3]))
+
+        if y4 == yp4 and y4 == y6 and y4 < y2:
+            x4 += 1
+            xp4 += 1
+            x6 += 1
+            H = y4
+            x2bound = floor((H)^(1/6))
+            L.append((H,(x2bound,x4,xp4,x6),[1,2,3]))
+
+        if y2 == y4 and y2 == yp4 and y2 == y6:
+            x2 += 1
+            x4 += 1
+            xp4 += 1
+            x6 += 1
+            H = y2
+            L.append((H,(x2,x4,xp4,x6),[0,1,2,3]))
+    return L
 
 def height_iterator_two_torsion(M,N):
     L = []
@@ -145,7 +280,31 @@ def height_iterator_two_torsion(M,N):
     return L
 
 def height_iterator_three_torsion(M,N):
-    raise NotImplementedError("Not yet implemented.")
+    L = []
+    x1 = floor((M)^(1/12))
+    x3 = floor((M)^(1/4))
+    H = max([x1^12,x3^4])
+    while H <= N:
+        y1 = (x1+1)^12
+        y3 = (x3+1)^4
+        if min([y1,y3]) > N:
+            break
+        if y1 < y3:
+            x1 += 1
+            H = y1
+            x3bound = floor((H)^(1/4))
+            L.append((H,[x1,x3bound],[0]))
+        if y3 < y1:
+            x3 += 1
+            H = y3
+            x1bound = floor((H)^(1/12))
+            L.append((H,[x1bound,x3],[1]))
+        if y1 == y3:
+            x1 += 1
+            x3 += 1
+            H = y1
+            L.append((H,[x1,x3],[0,1]))
+    return L
 
 def height_iterator_full_weierstrass(M,N):
     raise NotImplementedError("Not yet implemented.")
@@ -173,18 +332,20 @@ def coefficients_from_height(H,coeffs,indices,model):
             L2.append((H,C))
     return L2
 
-
 def coeffs_to_a_invariants(c,model):
     if model == "short_weierstrass":
         C = [0,0,0,c[0],c[1]]
     elif model == "rank_one":
         C = [0,c[0],c[1],c[2],0]
     elif model == "rank_two":
-        raise NotImplementedError("Not yet implemented.")
+        a2,a4,b4,a6 = c[0],c[1],c[2],c[3]
+        I = 3*a4^2+b4^2-3*a2*a6
+        J = -27/4*a2^2*a4^2+18*a4^2*b4 - 2*b4^3 + 9*a2*b4*a6 - 27*a6^2
+        C = [0,0,0,-27*I,-27*J]
     elif model == "two_torsion":
         C = [0,c[0],0,c[1],0]
     elif model == "three_torsion":
-        raise NotImplementedError("Not yet implemented.")
+        C = [c[0],0,c[1],0,0]
     elif model == "full_weierstrass":
         raise NotImplementedError("Not yet implemented.")
     else: raise IOError("Please enter recognized Weierstrass family of curves.")
