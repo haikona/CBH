@@ -3,6 +3,8 @@
 
 from sage.interfaces.all import magma
 import time
+import numpy as np
+
 
 def height_iterator(M,N,model):
     if model == "short_weierstrass":
@@ -185,6 +187,7 @@ def set_magma_class_group_bounds(proof = True):
     elif proof == True:
         magma.eval('SetClassGroupBounds("PARI")')
 
+
 def data_by_height(cbh, invariant = 'two_selmer', proof = True):
 #INPUT: cbh = List of (height,(a1,a2,a3,a4,a6))
 #       invariant = 'rank', 'two_selmer_rank', 'two_selmer_size', 'two_torison_rank', 'reduced_two_selmer_rank', 'three_selmer_rank', 'three_selmer_size', 'three_torsion_rank', or 'reduced_three_selmer_rank'
@@ -351,3 +354,18 @@ def averaged_data(L, filename, return_data=False):
     np.savetxt(filename, Z)
     if return_data:
        return Z
+
+@parallel
+def compute_data(height_bound,model,invariant,filename1="output.txt",\
+                 filename2="problems.txt",proof=True):
+    L1 = height_iterator(0,height_bound,model)
+    L2 = []
+    for C in L1:
+        L2 += coefficients_from_height(C[0],C[1],C[2],model)
+
+    L3 = data_by_height(L2,invariant,proof)
+    
+    averaged_data(L3[0],filename1)
+
+    L4 = [flatten(C) for C in L3[1]]
+    np.savetxt(filename2,L4)
