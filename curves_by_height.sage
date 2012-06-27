@@ -9,6 +9,8 @@ def height_iterator(M,N,model):
        	return height_iterator_short_weierstrass(M,N)
     elif model == "rank_one":
         return height_iterator_rank_one(M,N)
+    elif model == "rank_two":
+        return height_iterator_rank_two(M,N)
     elif model == "two_torsion":
         return height_iterator_two_torsion(M,N)
     elif model == "three_torsion":
@@ -110,6 +112,9 @@ def height_iterator_rank_one(M,N):
             L.append((H,[x2,x3,x4],[0,1,2]))
     return L
 
+def height_iterator_rank_two(M,N):
+    raise NotImplementedError("Not yet implemented.")
+
 def height_iterator_two_torsion(M,N):
     raise NotImplementedError("Not yet implemented.")
 
@@ -121,9 +126,7 @@ def height_iterator_full_weierstrass(M,N):
 
 
 def coefficients_from_height(H,coeffs,indices,model):
-
     L = []
-
     for S in list(powerset(indices))[1:]:
         B = []
         for j in range(len(coeffs)):
@@ -135,9 +138,46 @@ def coefficients_from_height(H,coeffs,indices,model):
                 B.append(srange(-coeffs[j],coeffs[j]+1))
         C = CartesianProduct(*B).list()
         for c in C:
-            L.append([H,c])
+            L.append(c)
+
+    L2 = []
+    if model == "short_weierstrass":
+        for c in L:
+            C = [0,0,0,c[0],c[1]]
+            if not is_singular(C):
+                L2.append((H,C))
+    elif model == "rank_one":
+        for c in L:
+            C = [0,c[0],c[1],c[2],0]
+            if not is_singular(C):
+                L2.append((H,C))
+    elif model == "rank_two":
+        raise NotImplementedError("Not yet implemented.")
+    elif model == "two_torsion":
+        raise NotImplementedError("Not yet implemented.")
+    elif model == "three_torsion":
+        raise NotImplementedError("Not yet implemented.")
+    elif model == "full_weierstrass":
+        raise NotImplementedError("Not yet implemented.")
+    else: raise IOError("Please enter recognized Weierstrass family of curves.")
+
+    return L2
+
+def is_singular(C):
+    a1 = C[0]
+    a2 = C[1]
+    a3 = C[2]
+    a4 = C[3]
+    a6 = C[4]
+
+    b2 = a1^2 + 4*a2
+    b4 = 2*a4 + a1*a3
+    b6 = a3^2 + 4*a6
+    b8 = a1^2*a6 + 4*a2*a6 - a1*a3*a4 + a2*a3^2 - a4^2
+
+    Delta = -b2^2*b8 - 8*b4^3 - 27*b6^2 + 9*b2*b4*b6
+    return Delta==0
     
-    return L
 
 
 def set_magma_class_group_bounds(proof = True):
@@ -168,7 +208,7 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
         for C in cbh:
             try:
                 E = EllipticCurve(C[1])
-                output.append((C[0],C[1],E.selmer_rank())
+                output.append((C[0],C[1],E.selmer_rank()))
             except:
                 problems.append(C)
         print(time.time()-t)
@@ -178,7 +218,7 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
         for C in cbh:
             try:
                 E = EllipticCurve(C[1])
-                output.append((C[0],C[1],2^(E.selmer_rank()))
+                output.append((C[0],C[1],2^(E.selmer_rank())))
             except:
                 problems.append(C)
         print(time.time()-t)
@@ -188,18 +228,18 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
         for C in cbh:
             try:
                 E = EllipticCurve(C[1])
-                output.append((C[0],C[1],E.two_torsion_rank())
+                output.append((C[0],C[1],E.two_torsion_rank()))
             except:
                 problems.append(C)
         print(time.time()-t)
         return output,problems
-    
 
+    
     elif invariant == 'reduced_two_selmer_rank':
         for C in cbh:
             try:
                 E = EllipticCurve(C[1])
-                output.append((C[0],C[1],E.selmer_rank()-E.two_torsion_rank())
+                output.append((C[0],C[1],E.selmer_rank()-E.two_torsion_rank()))
             except:
                 problems.append(C)
         print(time.time()-t)
@@ -209,7 +249,7 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
         for C in cbh:
             try:
                 E = EllipticCurve(C[1])
-                output.append((C[0],C[1],2^(E.selmer_rank()-E.two_torsion_rank()))
+                output.append((C[0],C[1],2^(E.selmer_rank()-E.two_torsion_rank())))
             except:
                 problems.append(C)
         print(time.time()-t)
@@ -220,7 +260,7 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
         for C in cbh:
             try:
                 E = EllipticCurve(C[1])
-                output.append((C[0],C[1],E.three_selmer_rank())
+                output.append((C[0],C[1],E.three_selmer_rank()))
             except:
                 problems.append(C)
         print(time.time()-t)
@@ -231,7 +271,7 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
         for C in cbh:
             try:
                 E = EllipticCurve(C[1])
-                output.append((C[0],C[1],3^(E.three_selmer_rank()))
+                output.append((C[0],C[1],3^(E.three_selmer_rank())))
             except:
                 problems.append(C)
         print(time.time()-t)
@@ -245,9 +285,9 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
                 E = EllipticCurve(C[1])
                 ntors = E.torsion_order()
                 if ntors % 3 == 0:
-                    output.append((C[0],C[1],1)
+                    output.append((C[0],C[1],1))
                 else:
-                    output.append((C[0],C[1],0)
+                    output.append((C[0],C[1],0))
             except:
                 problems.append(C)
         print(time.time()-t)
@@ -260,9 +300,9 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
                 E = EllipticCurve(C[1])
                 ntors = E.torsion_order()
                 if ntors % 3 == 0:
-                    output.append((C[0],C[1],E.three_selmer_rank() - 1)
+                    output.append((C[0],C[1],E.three_selmer_rank() - 1))
                 else:
-                    output.append((C[0],C[1],E.three_selmer_rank())
+                    output.append((C[0],C[1],E.three_selmer_rank()))
             except:
                 problems.append(C)
         print(time.time()-t)
@@ -275,13 +315,14 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
                 E = EllipticCurve(C[1])
                 ntors = E.torsion_order()
                 if ntors % 3 == 0:
-                    output.append((C[0],C[1],3^(E.three_selmer_rank() - 1))
+                    output.append((C[0],C[1],3^(E.three_selmer_rank() - 1)))
                 else:
-                    output.append((C[0],C[1],3^(E.three_selmer_rank()))
+                    output.append((C[0],C[1],3^(E.three_selmer_rank())))
             except:
                 problems.append(C)
         print(time.time()-t)
         return output,problems
+    
     
     else:
         raise NotImplementedError('Invariant not yet Implemented')
