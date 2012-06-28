@@ -395,6 +395,16 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
                 problems.append(C)
         print(time.time()-t)
         return output,problems
+
+    elif invariant == 'sha_order':
+        for C in cbh:
+            try:
+                E = EllipticCurve(C[1])
+                output.append((C[0],C[1],E.sha().an_numerical(prec=14,proof=False)))
+            except:
+                problems.append(C)
+        print(time.time()-t)
+        return output,problems
     
     elif invariant == 'two_selmer_rank':
         for C in cbh:
@@ -518,6 +528,22 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
     
     else:
         raise NotImplementedError('Invariant not yet Implemented')
+
+def good_primes_by_height(cbh,start,stop):
+    t=time.time()
+    output = []
+    problems = []
+    for C in cbh:
+        E = EllipticCurve(C[1])
+        L = []
+	for p in primes(start,stop):
+            S = [ZZ(E.is_ordinary(p)),
+                 ZZ(E.has_good_reduction(p)),
+                 ZZ(E.galois_representation().is_surjective(p))]
+            L.append(S)
+        output.append((C[0],C[1],L))
+    print(time.time()-t)
+    return output
 
 def averaged_data(L, filename, return_data=False):
     """
