@@ -51,7 +51,11 @@ def four_selmer_size(E):
     magma.eval('two_descent_basis := [TwoCover(Sel2.i @@ Sel2_map) : i in [1..Ngens(Sel2)]]')
     magma.eval('CTmatrix := Matrix(GF(2), Ngens(Sel2), [CasselsTatePairing(C,D) : C, D in two_descent_basis])')
     scoker = ZZ(magma.eval('Rank(CTmatrix)'))
+    #print scoker
     s2 = ZZ(magma.eval('Ngens(Sel2)'))
-    sker = four_selmer_kernel_size(E)
+    #print s2
+    sker = four_selmer_kernel_size(E).ord(2)
+    #print sker
     sel4exp = 2*s2 - scoker - sker
+    #print sel4exp
     return 2^sel4exp
