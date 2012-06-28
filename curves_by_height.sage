@@ -341,6 +341,9 @@ def coeffs_to_a_invariants(c,model):
         a2,a4,b4,a6 = c[0],c[1],c[2],c[3]
         I = 3*a4^2+b4^2-3*a2*a6
         J = -27/4*a2^2*a4^2+18*a4^2*b4 - 2*b4^3 + 9*a2*b4*a6 - 27*a6^2
+        if J.denominator()==4:
+            I = I*16
+            J = J*64
         C = [0,0,0,-27*I,-27*J]
     elif model == "two_torsion":
         C = [0,c[0],0,c[1],0]
