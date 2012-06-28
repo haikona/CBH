@@ -309,6 +309,11 @@ def height_iterator_three_torsion(M,N):
 def height_iterator_full_weierstrass(M,N):
     raise NotImplementedError("Not yet implemented.")
 
+def coefficients_over_height_range(L,model):
+    L2 = []
+    for C in L:
+        L2 += coefficients_from_height(C[0],C[1],C[2],model)
+    return L2
 
 def coefficients_from_height(H,coeffs,indices,model):
     L = []
@@ -400,7 +405,13 @@ def data_by_height(cbh, invariant = 'two_selmer', proof = True):
         for C in cbh:
             try:
                 E = EllipticCurve(C[1])
-                output.append((C[0],C[1],E.sha().an_numerical(prec=14,proof=False)))
+
+                @fork
+                def f(E):
+                    #return E.sha().an_numerical(prec=14,proof=False)
+                    return E.sha().an(use_database=True)
+
+                output.append((C[0],C[1],f(E)))
             except:
                 problems.append(C)
         print(time.time()-t)
