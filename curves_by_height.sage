@@ -547,7 +547,8 @@ def averaged_data(L, filename, return_data=False):
 
 @parallel
 def compute_data(height_bound,model,invariant,filename1="output.txt",\
-                 filename2="problems.txt",proof=True):
+                 filename2="raw_data.txt",filename3="problems.txt",
+		 proof=True):
     L1 = height_iterator(0,height_bound,model)
     L2 = []
     for C in L1:
@@ -557,5 +558,7 @@ def compute_data(height_bound,model,invariant,filename1="output.txt",\
     
     averaged_data(L3[0],filename1)
 
-    L4 = [flatten(C) for C in L3[1]]
+    L4 = [flatten(C) for C in L3[0]]
     np.savetxt(filename2,L4)
+    L5 = [flatten(C) for C in L3[1]]
+    np.savetxt(filename3,L5)
