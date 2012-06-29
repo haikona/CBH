@@ -441,7 +441,7 @@ def data_by_height(L,inv="two_selmer",proof=True):
     return output,problems
 
 
-def data_by_height2(L,inv="two_selmer",proof=True,return_data=True,\
+def data_by_height2(L,inv="two_selmer",proof=True,return_data=False,\
                     output_filename="output.txt",problems_filename="problems.txt"):
 
     def _invariant(inv):
@@ -558,7 +558,7 @@ def averaged_data(L, filename, return_data=False):
     if return_data:
        return Z
 
-def averaged_data2(infile, outfile, return_data=False):
+def averaged_data2(infile, outfile="average_data.txt", return_data=False):
     """
     INPUT:
      -- infile: file of array of data, where each line is
@@ -607,3 +607,12 @@ def compute_data(height_bound,model,invariant,filename1="output.txt",\
     np.savetxt(filename2,L4)
     L5 = [flatten(C) for C in L3[1]]
     np.savetxt(filename3,L5)
+
+@parallel
+def crunch(height_bound,model,invariant,raw_data_file="raw_data.txt",\
+           problems_file="prob_data.txt",average_data_file="avg_data.txt"):
+    L1 = height_iterator(0,height_bound,model)
+    L2 = coefficients_over_height_range(L1,model)
+    data_by_height2(L2,inv=invariant,output_filename=raw_data_file,\
+                    problems_filename=problems_file)
+    averaged_data2(infile=raw_data_file,outfile=average_data_file)
