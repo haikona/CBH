@@ -391,7 +391,7 @@ def data_by_height(L,inv="two_selmer",proof=True):
 	elif inv == "sha_order":
 	    @fork
             def f(E):
-		return E.sha().an(use_database=True)
+		return E.sha().an_numerical(prec=14)
 	elif inv == "two_selmer_size":
 	    def f(E):
 		return 2^(E.selmer_rank())
