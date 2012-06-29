@@ -6,6 +6,8 @@ from sage.interfaces.all import magma
 import time
 import numpy as np
 
+attach four_selmer.sage
+
 
 def height_iterator(M,N,model):
     if model == "short_weierstrass":
@@ -386,50 +388,37 @@ def data_by_height(L,inv="two_selmer",proof=True):
 
     def _invariant(inv):
 	if inv == "rank":
-	    def f(E):
-		return E.rank(use_database=True, only_use_mwrank = False)
+	    def f(E): return E.rank(use_database=True, only_use_mwrank = False)
 	elif inv == "sha_order":
 	    @fork
-            def f(E):
-		return E.sha().an_numerical(prec=14)
+            def f(E): return E.sha().an_numerical(prec=14)
 	elif inv == "two_selmer_size":
-	    def f(E):
-		return 2^(E.selmer_rank())
+	    def f(E): return 2^(E.selmer_rank())
 	elif inv == "two_selmer_rank":
-	    def f(E):
-		return E.selmer_rank()
+	    def f(E): return E.selmer_rank()
 	elif inv == "reduced_two_selmer_size":
-	    def f(E):
-		return 2^(E.selmer_rank()-E.two_torsion_rank())
+	    def f(E): return 2^(E.selmer_rank()-E.two_torsion_rank())
 	elif inv == "reduced_two_selmer_rank":
-	    def f(E):
-		return E.selmer_rank()-E.two_torsion_rank()
+	    def f(E): return E.selmer_rank()-E.two_torsion_rank()
 	elif inv == "three_selmer_size":
-	    def f(E):
-		return 3^(E.three_selmer_rank())
+	    def f(E): return 3^(E.three_selmer_rank())
 	elif inv == "three_selmer_rank":
-	    def f(E):
-		return E.three_selmer_rank()
+	    def f(E): return E.three_selmer_rank()
 	elif inv == "reduced_three_selmer_size":
-	    def f(E):
-		return 3^(E.three_selmer_rank()-valuation(E.torsion_order(),3))
+	    def f(E): return 3^(E.three_selmer_rank()-valuation(E.torsion_order(),3))
 	elif inv == "reduced_three_selmer_rank":
-	    def f(E):
-		return E.three_selmer_rank()-valuation(E.torsion_order(),3)
+	    def f(E): return E.three_selmer_rank()-valuation(E.torsion_order(),3)
+        elif inv == "four_selmer_size":
+            def f(E): return four_selmer_size(E)
 	elif inv == "two_torsion_size":
-	    def f(E):
-		return 2^(E.two_torsion_rank())
+	    def f(E): return 2^(E.two_torsion_rank())
 	elif inv == "two_torsion_rank":
-	    def f(E):
-		return E.two_torsion_rank()
+	    def f(E): return E.two_torsion_rank()
 	elif inv == "three_torsion_size":
-	    def f(E):
-		return 3^(valuation(E.torsion_order(),3))
+	    def f(E): return 3^(valuation(E.torsion_order(),3))
 	elif inv == "three_torsion_rank":
-	    def f(E):
-		return valuation(E.torsion_order(),3)
-	else:
-	    raise NotImplementedError('Invariant not yet Implemented')
+	    def f(E): return valuation(E.torsion_order(),3)
+	else: raise NotImplementedError('Invariant not yet Implemented')
 	return f
 
     if inv in ["three_selmer_rank","three_selmer_size",\
@@ -450,6 +439,82 @@ def data_by_height(L,inv="two_selmer",proof=True):
             problems.append(C)
     print(time.time()-t)
     return output,problems
+
+
+def data_by_height2(L,inv="two_selmer",proof=True,return_data=True,\
+                    output_filename="output.txt",problems_filename="problems.txt"):
+
+    def _invariant(inv):
+	if inv == "rank":
+	    def f(E): return E.rank(use_database=True, only_use_mwrank = False)
+	elif inv == "sha_order":
+	    @fork
+            def f(E): return E.sha().an_numerical(prec=14)
+	elif inv == "two_selmer_size":
+	    def f(E): return 2^(E.selmer_rank())
+	elif inv == "two_selmer_rank":
+	    def f(E): return E.selmer_rank()
+	elif inv == "reduced_two_selmer_size":
+	    def f(E): return 2^(E.selmer_rank()-E.two_torsion_rank())
+	elif inv == "reduced_two_selmer_rank":
+	    def f(E): return E.selmer_rank()-E.two_torsion_rank()
+	elif inv == "three_selmer_size":
+	    def f(E): return 3^(E.three_selmer_rank())
+	elif inv == "three_selmer_rank":
+	    def f(E): return E.three_selmer_rank()
+	elif inv == "reduced_three_selmer_size":
+	    def f(E): return 3^(E.three_selmer_rank()-valuation(E.torsion_order(),3))
+	elif inv == "reduced_three_selmer_rank":
+	    def f(E): return E.three_selmer_rank()-valuation(E.torsion_order(),3)
+        elif inv == "four_selmer_size":
+            def f(E): return four_selmer_size(E)
+	elif inv == "two_torsion_size":
+	    def f(E): return 2^(E.two_torsion_rank())
+	elif inv == "two_torsion_rank":
+	    def f(E): return E.two_torsion_rank()
+	elif inv == "three_torsion_size":
+	    def f(E): return 3^(valuation(E.torsion_order(),3))
+	elif inv == "three_torsion_rank":
+	    def f(E): return valuation(E.torsion_order(),3)
+	else: raise NotImplementedError('Invariant not yet Implemented')
+	return f
+
+    if inv in ["three_selmer_rank","three_selmer_size",\
+                     "reduced_three_selmer_size",\
+                     "reduced_three_selmer_rank"]:
+        set_magma_class_group_bounds(proof)
+
+    f =  _invariant(inv)
+
+    t=time.time()
+    out_file  = open(output_filename,"w")
+    prob_file = open(problems_filename,"w")
+    if return_data:
+        output = []
+        problems = []
+    for C in L:
+        try:
+            E = EllipticCurve(C[1])
+            d = f(E)
+            out_file.write(str(C[0])+"\t")
+            for a in C[1]:
+                out_file.write(str(a)+"\t")
+            out_file.write(str(d)+"\n")
+            if return_data:
+                output.append((C[0],C[1],f(E)))
+        except:
+            prob_file.write(str(C[0])+"\t")
+            for a in C[1]:
+                prob_file.write(str(a)+"\t")
+            prob_file.write("\n")
+            if return_data:
+                problems.append(C)
+    out_file.close()
+    prob_file.close()
+    print(time.time()-t)
+    if return_data:
+        return output,problems
+
 
 def good_primes_by_height(cbh,start,stop):
     t=time.time()
@@ -490,6 +555,38 @@ def averaged_data(L, filename, return_data=False):
     I = np.append(I,True)
     Z = np.vstack([X[I],Y[I]]).T
     np.savetxt(filename, Z)
+    if return_data:
+       return Z
+
+def averaged_data2(infile, outfile, return_data=False):
+    """
+    INPUT:
+     -- infile: file of array of data, where each line is
+                H, a1, a2, a3, a4, a6, d
+        H: curve height
+        a1..a6: list of a-invariants of elliptic curve giving that height
+        d: the type of data that's being averaged, e.g., 2-Selmer, 3-Selmer
+     -- outfile: name of output file, passed in as a string
+
+    OUTPUT:
+     -- writes the averaged data to file
+     -- (optional) returns numpy array of dimension len(list) x 2,
+        where the first column has heights,
+        and the second the averaged data up to that height
+    """
+    data = np.loadtxt(infile)
+    X = data[:,0]
+    V = data[:,6:]
+
+    N = np.arange(1,X.shape[0]+1,dtype=np.float64)
+    N = (np.ones((V.shape[1],1))*N).T
+    Y = np.cumsum(V,0)/N
+
+    I = X[:-1] != X[1:]
+    I = np.append(I,True)
+
+    Z = np.vstack([X[I],Y[I,:].T]).T
+    np.savetxt(outfile, Z)
     if return_data:
        return Z
 
