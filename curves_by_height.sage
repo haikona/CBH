@@ -5,9 +5,9 @@
 from sage.interfaces.all import magma
 import time
 import numpy as np
+import sys
 
 attach four_selmer.sage
-
 
 def height_iterator(M,N,model):
     if model == "short_weierstrass":
@@ -509,6 +509,7 @@ def data_by_height2(L,inv="two_selmer",proof=True,return_data=False,\
             prob_file.write("\n")
             if return_data:
                 problems.append(C)
+        sys.stdout.flush()
     out_file.close()
     prob_file.close()
     print(time.time()-t)
