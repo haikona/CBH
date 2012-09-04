@@ -22,7 +22,71 @@ def height_iterator(M,N,model):
         return height_iterator_three_torsion(M,N)
     elif model == "full_weierstrass":
         return height_iterator_full_weierstrass(M,N)
+    elif model == "F_1(2)":
+        return height_iterator_F_12(M,N)
     else: raise IOError("Please enter recognized Weierstrass family of curves.")
+
+def height_increment(coeffs,pows):
+    I = range(len(coeffs))
+    J = [(coeffs[i]+1)^(pows[i]) for i in I]
+    H = min(J)
+    K = []
+
+    coeffs2 = deepcopy(coeffs)
+    for i in I:
+        if J[i]==H:
+            coeffs2[i] += 1
+            K.append(i)
+    return (H,coeffs2,K)
+
+def height_iterator2(M,N,model):
+    if model=="short_weierstrass":
+        pows = [3,2]
+    elif model=="rank_one":
+        pows = [6,4,3]
+    elif model=="rank_two":
+        pows = [6,3,3,2]
+    elif model=="two_torsion":
+        pows = []
+    elif model=="three_torsion":
+        pows = []
+    elif model=="full_weierstrass":
+        pows = []
+    elif model=="":
+        pows = []
+    elif model=="":
+        pows = []
+    coeffs = [floor(M^(1/n)) for n in pows]
+    H = max([coeffs[i]^(pows[i]) for i in range(len(pows))])
+
+    L = []
+    while H <= N:
+        C = height_increment(coeffs,pows)
+        if C[0]>N:
+            break
+        else:
+            H = C[0]
+            coeffs = C[1]
+            L.append(C)
+    return L
+
+
+def height_iterator_short_weierstrass2(M,N):
+    L = []
+
+    a = floor(M^(1/3))
+    b = floor(M^(1/2))
+    H = max([a^3,b^2])
+    while H <= N:
+        C = height_increment([a,b],[3,2])
+        if C[0]>N:
+            break
+        else:
+            H = C[0]
+            a = C[1][0]
+            b = C[1][1]
+            L.append(C)
+    return L
 
 def height_iterator_short_weierstrass(M,N):
     L = []
@@ -311,6 +375,76 @@ def height_iterator_three_torsion(M,N):
 def height_iterator_full_weierstrass(M,N):
     raise NotImplementedError("Not yet implemented.")
 
+def height_iterator_F_12(M,N):
+    """
+    Curve family of the form y^2 = x^3 + (a1^2-a2-a2')*x^2 + a2*a2'*x
+    with distinguished points (0,0), (a2,a1,a2) and (a2',a1,a2').
+    Height given by max{|a1|,|a2|^(1/2),|a2'|^(1/2)}.
+    """
+
+    L = []
+
+    x2 = M
+    x3 = floor(M^(1/2))
+    x4 = floor(M^(1/2))
+    H = max([x2,x3^2,x4^2])
+    while H <= N:
+        y2 = x2+1
+        y3 = (x3+1)^2
+        y4 = (x4+1)^2
+        d = min([y2,y3,y4])
+        if min([y2,y3,y4]) > N:
+            break
+        if y2 < min(y3,y4):
+            x2 += 1
+            H = y2
+            x3bound = floor((H)^(1/2))
+            x4bound = floor((H)^(1/2))
+            L.append((H,[x2,x3bound,x4bound],[0]))
+
+        if y3 < min(y2,y4):
+            x3 += 1
+            H = y3
+            x2bound = H
+            x4bound = floor((H)^(1/2))
+            L.append((H,[x2bound,x3,x4bound],[1]))
+
+        if y4 < min(y2,y3):
+            x4 += 1
+            H = y4
+            x2bound = H
+            x3bound = floor((H)^(1/2))
+            L.append((H,[x2bound,x3bound,x4],[2]))
+            
+        if y2 == y3 and y2 < y4:
+            x2 += 1
+            x3 += 1
+            H = y2
+            x4bound = floor((H)^(1/2))
+            L.append((H,[x2,x3,x4bound],[0,1]))
+            
+        if y2 == y4 and y2 < y3:
+            x2 += 1
+            x4 += 1
+            H = y2
+            x3bound = floor((H)^(1/2))
+            L.append((H,[x2,x3bound,x4],[0,2]))
+           
+        if y3 == y4 and y3 < y2:
+            x3 += 1
+            x4 += 1
+            H = y2
+            x2bound = H
+            L.append((H,[x2bound,x2,x4],[1,2]))
+
+        if y2 == y3 and y2 == y4:
+            x2 += 1
+            x3 += 1
+            x4 += 1
+            H = y2
+            L.append((H,[x2,x3,x4],[0,1,2]))
+    return L
+
 def coefficients_over_height_range(L,model):
     L2 = []
     for C in L:
@@ -358,9 +492,13 @@ def coeffs_to_a_invariants(c,model):
         C = [c[0],0,c[1],0,0]
     elif model == "full_weierstrass":
         raise NotImplementedError("Not yet implemented.")
+    elif model == "height_iterator_F_1(2)":
+# Need proper form here
+        C = [0,c[0]^2-c[1]-c[2],0,c[1]*c[2],0]
     else: raise IOError("Please enter recognized Weierstrass family of curves.")
 
     return C
+
 
 def is_singular(C):
     a1 = C[0]
