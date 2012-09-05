@@ -110,6 +110,11 @@ class CurveEnumerator():
          (bounds inclusive), and for each height the equation coefficients
          that produce curves of that height.
 
+        WARNING: This function my return heights for which only singular
+                  curves exist. For example, in the short Weierstrass case
+                  height 0 is permissable, as the curve Y^2 = X^3 (uniquely)
+                  has height zero. 
+
         INPUT:
 
             - ``lowerbound`` -- Lower bound for the height range;
@@ -207,7 +212,7 @@ class CurveEnumerator():
     def _is_singular(self,C):
         """
         Tests if the a-invariants in 5-tuple C specify a singular
-         elliptic curv.
+         elliptic curve.
 
         INPUT:
 
@@ -275,8 +280,9 @@ class CurveEnumerator():
             (4, [0, 0, 0, -1, -2]), (4, [0, 0, 0, -1, 2]), (4, [0, 0, 0, 0, -2]), \
             (4, [0, 0, 0, 0, 2]), (4, [0, 0, 0, 1, -2]), (4, [0, 0, 0, 1, 2])]
         """
+        # Produce list of all coefficient tuples with given height
         L = []
-        for S in list(powerset(indexs))[1:]:
+        for S in list(powerset(index))[1:]:
             B = []
             for j in range(len(coeffs)):
                 if j in S:
@@ -289,6 +295,7 @@ class CurveEnumerator():
             for c in C:
                 L.append(c)
 
+        # Convert coefficient tuples to a-invariants
         L2 = []
         for c in L:
             C = self._coeffs_to_a_invariants(c)
@@ -296,4 +303,69 @@ class CurveEnumerator():
                 L2.append((height,C))
         return L2
 
+    def coefficients_over_height_range(self,coefficient_list):
+        """
+        Return all a-invariant tuples of elliptic curves over a given height range.
+
+        INPUT:
+
+            - ``coefficient_list`` -- A list of height/coefficient/index
+              tuples. See the documentation for _height_increment() for
+              a description of this format
+
+        OUTPUT:
+
+            - A list of tuples, each consisting of a height and a tuple of
+              a-invariants defining an elliptic curve over Q of that height.
+              The list will be ordered by increasing height.
+
+        EXAMPLES:
+
+            sage: from ? import *
+            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: B = C.heights(1,4)[0]; B
+            [(1, [1, 1], [0, 1]), (4, [1, 2], [1])]
+            sage: L = C.coefficients_over_height_range(B)
+            sage: for ell in L: print(ell)
+            for ell in L: print(ell)
+            ....: 
+            (1, [0, 0, 0, -1, 0])
+            (1, [0, 0, 0, 1, 0])
+            (1, [0, 0, 0, 0, -1])
+            (1, [0, 0, 0, 0, 1])
+            (1, [0, 0, 0, -1, -1])
+            (1, [0, 0, 0, -1, 1])
+            (1, [0, 0, 0, 1, -1])
+            (1, [0, 0, 0, 1, 1])
+            (4, [0, 0, 0, -1, -2])
+            (4, [0, 0, 0, -1, 2])
+            (4, [0, 0, 0, 0, -2])
+            (4, [0, 0, 0, 0, 2])
+            (4, [0, 0, 0, 1, -2])
+            (4, [0, 0, 0, 1, 2])
+        """
+        L2 = []
+        for C in coefficient_list:
+            L2 += self.coefficients_from_height(*C)
+        return L2
+
+    def _set_magma_class_group_bounds(proof = True):
+        """
+        Auxiliary function; set class group computation method
+         in Magma (used in computing 4-Selmer group size)
+
+        INPUT:
+
+            - ``proof`` -- True or False; If False, the Generalized
+              Riemann Hypothesis will not be assumed in the computing
+              of class group bounds in Magma (and thus will be
+              slower); if True, GRH will be assumed and computation
+              will eb quicker.
+
+        EXAMPLES:
+        """
+        if proof == False:
+            magma.eval('SetClassGroupBounds("GRH")')
+        else:
+            magma.eval('SetClassGroupBounds("PARI")')
 

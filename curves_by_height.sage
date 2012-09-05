@@ -519,7 +519,7 @@ def is_singular(C):
 def set_magma_class_group_bounds(proof = True):
     if proof == False:
         magma.eval('SetClassGroupBounds("GRH")')
-    elif proof == True:
+    else:
         magma.eval('SetClassGroupBounds("PARI")')
 
 def data_by_height(L,inv="two_selmer",proof=True):
