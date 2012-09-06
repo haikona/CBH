@@ -30,10 +30,35 @@ class CurveEnumerator():
             sage:
         """
         
-        self._family = family
         if family=="short_weierstrass":
             self._num_coeffs = ZZ(2)
             self._pows = (ZZ(3),ZZ(2))
+        elif family=="full_weierstrass":
+            raise NotImplementedError("Family not yet implemented.")
+        elif family=="rank_one":
+            raise NotImplementedError("Family not yet implemented.")
+        elif family=="rank_two":
+            raise NotImplementedError("Family not yet implemented.")
+        elif family=="two_torsion":
+            raise NotImplementedError("Family not yet implemented.")
+        elif family=="three_torsion":
+            raise NotImplementedError("Family not yet implemented.")
+        elif family=="F_1(2)":
+            raise NotImplementedError("Family not yet implemented.")
+        elif family=="F_1(3)":
+            raise NotImplementedError("Family not yet implemented.")
+        elif family=="F_1(4)":
+            raise NotImplementedError("Family not yet implemented.")
+        elif family=="F_1(2x2)":
+            raise NotImplementedError("Family not yet implemented.")
+        elif family=="F_2(2)":
+            raise NotImplementedError("Family not yet implemented.")
+        else:
+            raise IOError("'family' must be a recognized Weierstrass "\
+            +"family of elliptic curves")
+
+        self._family = family
+
 
     def __repr__(self):
         """
@@ -834,77 +859,3 @@ class CurveEnumerator():
         np.savetxt(outfile, Z)
         if return_data:
            return [(C[0],C[1]) for C in Z]
-
-    def data_by_height2(L,inv="two_selmer",proof=True,return_data=False,\
-                        output_filename="output.txt",problems_filename="problems.txt"):
-
-        def _invariant(inv):
-            if inv == "rank":
-                def f(E): return E.rank(use_database=True, only_use_mwrank = False)
-            elif inv == "sha_order":
-                def f(E): return E.sha().an_numerical(prec=14)
-            elif inv == "two_selmer_size":
-                def f(E): return 2^(E.selmer_rank())
-            elif inv == "two_selmer_rank":
-                def f(E): return E.selmer_rank()
-            elif inv == "reduced_two_selmer_size":
-                def f(E): return 2^(E.selmer_rank()-E.two_torsion_rank())
-            elif inv == "reduced_two_selmer_rank":
-                def f(E): return E.selmer_rank()-E.two_torsion_rank()
-            elif inv == "three_selmer_size":
-                def f(E): return 3^(E.three_selmer_rank())
-            elif inv == "three_selmer_rank":
-                def f(E): return E.three_selmer_rank()
-            elif inv == "reduced_three_selmer_size":
-                def f(E): return 3^(E.three_selmer_rank()-valuation(E.torsion_order(),3))
-            elif inv == "reduced_three_selmer_rank":
-                def f(E): return E.three_selmer_rank()-valuation(E.torsion_order(),3)
-            elif inv == "four_selmer_size":
-                def f(E): return four_selmer_size(E)
-            elif inv == "two_torsion_size":
-                def f(E): return 2^(E.two_torsion_rank())
-            elif inv == "two_torsion_rank":
-                def f(E): return E.two_torsion_rank()
-            elif inv == "three_torsion_size":
-                def f(E): return 3^(valuation(E.torsion_order(),3))
-            elif inv == "three_torsion_rank":
-                def f(E): return valuation(E.torsion_order(),3)
-            else: raise NotImplementedError('Invariant not yet Implemented')
-            return f
-
-        if inv in ["three_selmer_rank","three_selmer_size",\
-                         "reduced_three_selmer_size",\
-                         "reduced_three_selmer_rank"]:
-            set_magma_class_group_bounds(proof)
-
-        f =  _invariant(inv)
-
-        t=time.time()
-        out_file  = open(output_filename,"w")
-        prob_file = open(problems_filename,"w")
-        if return_data:
-            output = []
-            problems = []
-        for C in L:
-            try:
-                E = EllipticCurve(C[1])
-                d = f(E)
-                out_file.write(str(C[0])+"\t")
-                for a in C[1]:
-                    out_file.write(str(a)+"\t")
-                out_file.write(str(d)+"\n")
-                if return_data:
-                    output.append((C[0],C[1],f(E)))
-            except:
-                prob_file.write(str(C[0])+"\t")
-                for a in C[1]:
-                    prob_file.write(str(a)+"\t")
-                prob_file.write("\n")
-                if return_data:
-                    problems.append(C)
-            sys.stdout.flush()
-        out_file.close()
-        prob_file.close()
-        print(time.time()-t)
-        if return_data:
-            return output,problems
