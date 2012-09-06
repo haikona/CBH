@@ -9,6 +9,7 @@ AUTHORS:
 
 #*****************************************************************************
 #       Copyright (C) 2007 William Stein and Simon Spicer
+#WAS: change copyright year
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
 #
@@ -23,6 +24,7 @@ AUTHORS:
 #*****************************************************************************
 
 import time
+#WAS: do *NOT* import numpy at module scope, since it wastes time -- import it right before you use it.
 import numpy as np
 from copy import deepcopy
 from sage.rings.integer_ring import IntegerRing, ZZ
@@ -37,8 +39,8 @@ class CurveEnumerator():
     over Q in a specified Weierstrass form ordered by height, where
     height is a function of the Weierstrass equation of the curve
     as described in the __init__() method.
-    """
 
+    """
     def __init__(self, family="short_weierstrass"):
         """
         INPUT:
@@ -58,7 +60,7 @@ class CurveEnumerator():
               * 'rank_two'
               * 'two_torsion'
               * 'three_torsion'
-              * 'F_1(2)'
+              * 'F_1(2)'  # WAS: what are these?  (at least give a reference)
               * 'F_1(3)'
               * 'F_1(4)'
               * 'F_1(2x2)'
@@ -81,6 +83,7 @@ class CurveEnumerator():
         
         if family=="short_weierstrass":
             self._num_coeffs = ZZ(2)
+            #WAS: put in comment or even assertion below verifying that these are Integer type, since if they aren't, your code will break elsewhere
             self._pows = (ZZ(3),ZZ(2))
         elif family=="full_weierstrass":
             raise NotImplementedError("Family not yet implemented.")
@@ -103,6 +106,7 @@ class CurveEnumerator():
         elif family=="F_2(2)":
             raise NotImplementedError("Family not yet implemented.")
         else:
+            # WAS: I prefer ValueError instead of IOError; \ not needed due to parens
             raise IOError("'family' must be a recognized Weierstrass "\
             +"family of elliptic curves")
 
@@ -113,9 +117,14 @@ class CurveEnumerator():
         """
         Representation of self. Prints what family of curves is being considered,
          the model description and the height function on that family.
+        # WAS: delete space in front of the 
         
         EXAMPLES::
 
+# WAS: The import 'from sage.schemes.elliptic_curves.curve_enumerator import *'
+# seems possibly heavy.  I wonder if instead adding a new function to the
+# top level (by putting it in elliptic_curves.all.py) called EllipticCurveEnumerator
+# would be a reasonable?  I like it.
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
             sage: C = CurveEnumerator(family="short_weierstrass")
             sage: C
@@ -141,14 +150,16 @@ class CurveEnumerator():
         Given a tuple of coefficients of a Weierstrass equation with
          a certain height, return the next largest permissable height
          and the range of coefficients that achieve that height.
+        # WAS: weird spaces at beginning of line above. 
 
         INPUT:
+        # WAS: no indent, as I explained.
         
-            - ``coeffs`` -- A list or tuple of coefficients of the same
-              length as the number of coeffients in the model.
+            - ``coeffs`` -- A list or tuple of coefficients of the
+              same length as the number of coeffients in the model.
 
         OUTPUT:
-
+        # WAS: no indent, as I explained.
             - A tuple of three entries consisting of:
               -- the smallest permissable height greater than the height
                  of the input coefficient list;
@@ -185,6 +196,8 @@ class CurveEnumerator():
         """
         Return the next permissable height greater than or equal to N for
          curves in self's family.
+
+        #WAS: weird spaces 
         
         WARNING: This function my return a height for which only singular
                   curves exist. For example, in the short Weierstrass case
@@ -225,13 +238,16 @@ class CurveEnumerator():
             AssertionError: Input must be non-negative integer.
         """
 
+        #WAS: you're not asserting N is an integer here:
+        #WAS: In fact, just remove all constraint N.
+        #WAS: then do      "ZZ(ceil(N**(1/n)))"
         assert N>=0, "Input must be non-negative integer."
 
         coeffs = [ceil(N**(1/n))-1 for n in self._pows]
         height = max([coeffs[i]**(self._pows[i]) for i in range(self._num_coeffs)])
         return self._height_increment(coeffs)
 
-    def heights(self,lowerbound,upperbound):
+    def heights(self,lowerbound,upperbound):  #WAS:put spaces after commas, e.g., (self, lowerbound, upperbound); there are many instances of this all over your code... so fix them all
         """
         Return a list of permissable curve heights in the specified range
          (bounds inclusive), and for each height the equation coefficients
@@ -290,7 +306,7 @@ class CurveEnumerator():
         L = []
         while height <= upperbound:
             C = self._height_increment(coeffs)
-            if C[0]>upperbound:
+            if C[0]>upperbound:  #WAS: space around ">"
                 break
             else:
                 height = C[0]
@@ -319,6 +335,18 @@ class CurveEnumerator():
             sage: C._coeffs_to_a_invariants([4,9])
             [0, 0, 0, 4, 9]
         """
+        #WAS: this should be rewritten to be object oriented.
+# class CurveEnumerator(object):
+# ...
+# class CurveEnumeratorShortWeierstrass(CurveEnumerator):
+# ...
+# class CurveEnumeratorRankONe(CurveEnumerator):
+# ...
+#
+# def EllipticCurveEnumerator(...):
+#     return right class instance...
+#
+# sage: EllipticCurveEnumerator(...)  # no import needed!
         if self._family == "short_weierstrass":
             C = [0,0,0,c[0],c[1]]
         elif self._family == "rank_one":
@@ -548,6 +576,10 @@ class CurveEnumerator():
         H = self.heights(lowerbound,upperbound)
         L = self._coeffs_from_height_list(H)
 
+        #WAS:I question the value/use of this savefile
+        #WAS:   open(savefile,'w').write('\n'.join('\t'.join([str(a) for a in C])))
+        #WAS: maybe leave in, but use consistent naming, e.g., output_filename...
+        
         # Save data to file
         if savefile is not None:
             out_file  = open(savefile,"w")
@@ -576,11 +608,14 @@ class CurveEnumerator():
         EXAMPLES:
         """
         if proof == False:
+            #WAS: this can't work since "magma" is not in scope.
+            #from sage.interfaces.all import magma...
             magma.eval('SetClassGroupBounds("GRH")')
         else:
             magma.eval('SetClassGroupBounds("PARI")')
 
 
+    #WAS: make output_filename (etc.) optional
     def rank(self,curves,output_filename="rank_output.txt",\
              problems_filename="rank_problems.txt",\
              return_data=True,use_database=True,use_only_mwrank=False,\
@@ -611,8 +646,12 @@ class CurveEnumerator():
             - ``return_data``       -- (Default True): If set to False, the data
               is not returned at the end of computation; only written to file.
 
+#WAS: maybe use_cremonadb?  what about other databases?
             - ``use_database``      -- (Default True): If set to False, the 
               Cremona database is not used to look up curve ranks.
+#WAS: better yet use **...
+(..., **rank_opts)
+.rank(..., **rank_opts)
 
             - ``use_only_mwrank``   -- (Default False): If set to True, will not
               try to use analytic methods to compute rank before consulting the
@@ -625,7 +664,7 @@ class CurveEnumerator():
 
             - Writes data to file. Each line of the written file consists of seven
               tab separated entries of the form
-              H, a1, a2, a3, a4, a6, d
+              H, a1, a2, a3, a4, a6, d  #WAS: delete the commas -- they are tabs!??
               H: The curve's height
               a1,...,a6: The curve's a-invariants
               d: The computed datum for that curve
