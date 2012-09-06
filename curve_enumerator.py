@@ -117,7 +117,7 @@ class CurveEnumerator():
         EXAMPLES::
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: C
             Height iterator for elliptic curves over Q
             Family:             Short Weierstrass
@@ -163,7 +163,7 @@ class CurveEnumerator():
         EXAMPLES::
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: C._height_increment([2,2])
             (9, [2, 3], [1])
             sage: C._height_increment([3,7])
@@ -213,19 +213,19 @@ class CurveEnumerator():
         EXAMPLES::
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: C.next_height(4) 
             (4, [1, 2], [1])
             sage: C.next_height(60)
             (64, [4, 8], [0, 1])
 
-            sage: C.heights(-100)
+            sage: C.next_height(-100)
             Traceback (most recent call last):
             ...
             AssertionError: Input must be non-negative integer.
         """
 
-        assert N>=0, "Input must be non_negative integer."
+        assert N>=0, "Input must be non-negative integer."
 
         coeffs = [ceil(N**(1/n))-1 for n in self._pows]
         height = max([coeffs[i]**(self._pows[i]) for i in range(self._num_coeffs)])
@@ -266,18 +266,18 @@ class CurveEnumerator():
         EXAMPLES::
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: C.heights(100,150) 
-            [(121, [4, 11], [1]), (125, [5, 11], [0]), (144, [5, 12], [1])]
+            [(100, [4, 10], [1]), (121, [4, 11], [1]), (125, [5, 11], [0]), (144, [5, 12], [1])]
 
-            sage: C.heights(-100,100)
-            Traceback (most recent call last):
-            ...
-            AssertionError: Height upper bound must be greater than or equal to lower bound.
             sage: C.heights(150,100)
             Traceback (most recent call last):
             ...
-            AssertionError: Height upper bound must be non-negative.
+            AssertionError: Height upper bound must be greater than or equal to lower bound.
+            sage: C.heights(-100,100)
+            Traceback (most recent call last):
+            ...
+            AssertionError: Height lower bound must be non-negative.
         """
 
         assert lowerbound>=0, "Height lower bound must be non-negative."
@@ -315,7 +315,7 @@ class CurveEnumerator():
 
         EXAMPLES::
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: C._coeffs_to_a_invariants([4,9])
             [0, 0, 0, 4, 9]
         """
@@ -359,12 +359,12 @@ class CurveEnumerator():
 
         EXAMPLES::
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
-            sage: C.is_singular([0,0,0,3,2])
+            sage: C = CurveEnumerator(family="short_weierstrass")
+            sage: C._is_singular([0,0,0,3,2])
             False
-            sage:EllipticCurve([0,0,0,3,2])
+            sage: EllipticCurve([0,0,0,3,2])
             Elliptic Curve defined by y^2 = x^3 + 3*x + 2 over Rational Field
-            sage: C.is_singular([0,0,0,-3,2])
+            sage: C._is_singular([0,0,0,-3,2])
             True
             sage: EllipticCurve([0,0,0,-3,2])
             Traceback (most recent call last):
@@ -413,12 +413,12 @@ class CurveEnumerator():
         EXAMPLES:
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: B = C.next_height(4); B
             (4, [1, 2], [1])
             sage: L = C._coeffs_from_height(B)
             sage: for ell in L: print ell
-            ...:
+            ...: 
             (4, [0, 0, 0, -1, -2])
             (4, [0, 0, 0, -1, 2])
             (4, [0, 0, 0, 0, -2])
@@ -473,12 +473,12 @@ class CurveEnumerator():
         EXAMPLES:
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: B = C.heights(1,4)[0]; B
             [(1, [1, 1], [0, 1]), (4, [1, 2], [1])]
             sage: L = C._coeffs_from_height_list(B)
             sage: for ell in L: print(ell)
-            ....: 
+            ....:  
             (1, [0, 0, 0, -1, 0])
             (1, [0, 0, 0, 1, 0])
             (1, [0, 0, 0, 0, -1])
@@ -526,7 +526,7 @@ class CurveEnumerator():
         EXAMPLES:
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(0,4)
             sage: for ell in L: print(ell)
             ....: 
@@ -641,7 +641,7 @@ class CurveEnumerator():
         EXAMPLES::
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(0,4)
             sage: R = C.rank(L,return_data=True,print_timing=False)
             sage: R[1]
@@ -763,7 +763,7 @@ class CurveEnumerator():
         EXAMPLES::
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(0,4)
             sage: R = C.two_selmer(L,rank=True,return_data=True,print_timing=False)
             sage: R[1]
@@ -877,12 +877,12 @@ class CurveEnumerator():
         EXAMPLES::
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: C = CurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(0,4)
             sage: R = C.rank(L,return_data=true,print_timing=False)
             sage: A = C.averaged_data(R,return_data=True)
             sage: for c in A: print(c)
-            ...:
+            ...: 
         """
         # Load, format data
         if isinstance(input,str):
