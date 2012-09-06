@@ -311,19 +311,25 @@ class CurveEnumerator():
         Delta = -(b2**2)*b8 - 8*(b4**3) - 27*(b6**2) + 9*b2*b4*b6
         return Delta==0
 
-    def _coefficients_from_height(self,height,coeffs,index):
+    def _coeffs_from_height(self,height_tuple):
         """
         Returns a list of tuples of a-invariants of all curves
-         of the specified height.
+         described by height_tuple.
 
         INPUT:
 
-            - ``height`` -- A permissable curve height
-            - ``coeffs`` -- A tuple of coeffients as per the family model
-            - ``index``  -- The index of coefficients in the above tuple
-              that achieve this height. See the documentation for 
-              _height_increment() for a more thorough descripltion of this
-              format.
+            - ``height_tuple`` -- A tuple of the form
+              (H, C, I) such that 
+              H: The smallest height >= N
+              C: A list of coefficients for curves of this height
+              I: A list of indices indicating which of the above coefficients
+              achieve this height. The remaining values in C  indicate the 
+              max absolute value those coefficients are allowed to obtain
+              without altering the height.
+
+              For example, the tuple (4, [1, 2], [1]) for the short Weierstrass
+              case denotes set of curves with height 4; these are all of the
+              form Y^2 = X^3 + A*X + B, where B=2 and A ranges between -1 and 1.
 
         OUTPUT:
 
@@ -334,12 +340,22 @@ class CurveEnumerator():
 
             sage: from ? import *
             sage: C = CurveEnumerator(model="short_weierstrass")
-            sage: B = C.heights(4,4)[0]; B
+            sage: B = C.next_height(4); B
             (4, [1, 2], [1])
-            sage: L = C.coefficients_from_height(*B); L
-            (4, [0, 0, 0, -1, -2]), (4, [0, 0, 0, -1, 2]), (4, [0, 0, 0, 0, -2]), \
-            (4, [0, 0, 0, 0, 2]), (4, [0, 0, 0, 1, -2]), (4, [0, 0, 0, 1, 2])]
+            sage: L = C._coeffs_from_height(B)
+            sage: for ell in L: print ell
+            ...:
+            (4, [0, 0, 0, -1, -2])
+            (4, [0, 0, 0, -1, 2])
+            (4, [0, 0, 0, 0, -2])
+            (4, [0, 0, 0, 0, 2])
+            (4, [0, 0, 0, 1, -2])
+            (4, [0, 0, 0, 1, 2])
         """
+        height = height_tuple[0]
+        coeffs = height_tuple[1]
+        index  = height_tuple[2]
+
         # Produce list of all coefficient tuples with given height
         L = []
         for S in list(powerset(index))[1:]:
@@ -363,7 +379,7 @@ class CurveEnumerator():
                 L2.append((height,C))
         return L2
 
-    def _coefficients_from_height_list(self,coefficient_list):
+    def _coeffs_from_height_list(self,coefficient_list):
         """
         Return all height/a-invariant tuples of elliptic curves from a
          list of curve height/coefficient/index tuples.
@@ -386,7 +402,7 @@ class CurveEnumerator():
             sage: C = CurveEnumerator(model="short_weierstrass")
             sage: B = C.heights(1,4)[0]; B
             [(1, [1, 1], [0, 1]), (4, [1, 2], [1])]
-            sage: L = C.coefficients_from_height_list(B)
+            sage: L = C._coeffs_from_height_list(B)
             sage: for ell in L: print(ell)
             ....: 
             (1, [0, 0, 0, -1, 0])
@@ -406,7 +422,7 @@ class CurveEnumerator():
         """
         L2 = []
         for C in coefficient_list:
-            L2 += self._coefficients_from_height(*C)
+            L2 += self._coeffs_from_height(C)
         return L2
 
     def coefficients_over_height_range(self,lowerbound,upperbound,\
@@ -456,7 +472,7 @@ class CurveEnumerator():
             (4, [0, 0, 0, 1, 2])
         """
         H = self.heights(lowerbound,upperbound)
-        L = self._coefficients_from_height_list(H)
+        L = self._coeffs_from_height_list(H)
 
         # Save data to file
         if savefile is not None:
@@ -502,39 +518,58 @@ class CurveEnumerator():
  
             - ``curves``            -- A list of height/a-invariant tuples of
               curves, as returned by the coefficients_over_height_range() method
+              Each tuple is of the form
+              (H, [a1,a2,a3,a4,a6]) where
+              H is the height of the curve, and
+              [a1,...,a6] the curve's a-invariants
+
             - ``output_filename``   -- String, the name of the file to which the
               output will be saved. Each line of the save file describes a
               single curve, and consists of seven tab-separated integers:
               the first is the height of the curve; the following five are
               the curve's a-invariants, and the final integer is the curve's rank.
+
             - ``problems_filename`` -- String: the file name to which problem
               curves will be written. These are curves for which rank could not
               be computed. Write format is the same as above, except rank is
               omitted at the end.
+
             - ``return_data``       -- (Default True): If set to False, the data
               is not returned at the end of computation; only written to file.
+
             - ``use_database``      -- (Default True): If set to False, the 
               Cremona database is not used to look up curve ranks.
+
             - ``use_only_mwrank``   -- (Default False): If set to True, will not
               try to use analytic methods to compute rank before consulting the
               Cremona database
+
             - ``print_timing``      -- (Default True): If set to False, wall time
               of total computation will not be printed.
 
         OUTPUT:
 
+            - Writes data to file. Each line of the written file consists of seven
+              tab separated entries of the form
+              H, a1, a2, a3, a4, a6, d
+              H: The curve's height
+              a1,...,a6: The curve's a-invariants
+              d: The computed datum for that curve
+
             - (only if return_data==True) A list consisting of two lists:
-              The first is a list of triples, consisting of curve height, curve
-              a-invariants, and computed rank. The second is a list of curves
-              for which rank could not be (provably) computed; each entry of this
-              list is just a pair consisting of height and a-invariants.
+              The first is a list of triples of the form
+              (H, (a1,a2,a3,a4,a6), d)
+              where the entries are as above.
+              The second is a list of curve for which the datum could not be provably
+              computed; each entry of this list is just a pair consisting of height
+              and a-invariants.
 
         EXAMPLES::
 
             sage: from ? import *
             sage: C = CurveEnumerator(model="short_weierstrass")
             sage: L = C.coefficients_over_height_range(0,4)
-            sage: R = C.rank(L,return_data=true,print_timing=False)
+            sage: R = C.rank(L,return_data=True,print_timing=False)
             sage: R[1]
             []
             sage: for r in R[0]: print(r)
@@ -592,6 +627,154 @@ class CurveEnumerator():
             print(time.time()-t)
         if return_data:
             return output,problems
+
+    def two_selmer(self,curves,rank=True,reduced=False,
+                   output_filename="rank_output.txt",problems_filename="rank_problems.txt",\
+                   return_data=True,print_timing=True):
+        r"""
+        Compute rank or size of two-Selmer for a list of curves ordered by height.
+
+        INPUT:
+ 
+            - ``curves``            -- A list of height/a-invariant tuples of
+              curves, as returned by the coefficients_over_height_range() method.
+              Each tuple is of the form
+              (H, [a1,a2,a3,a4,a6]) where
+              H is the height of the curve, and
+              [a1,...,a6] the curve's a-invariants
+
+            - ``rank``              -- (Default True) Compute the rank versus size
+              of the curve's 2-Selmer group. If True, rank is computed; if set to
+              False size (i.e. 2^rank) is computed instead.
+
+            - ``reduced``           -- (Default False) Compute full 2-Selmer or
+              reduced 2-Selmer. If True, full 2-Selmer is computed; if False, the
+              reduced group rank/size (i.e. 2-Selmer rank - 2-torsion rank or
+              2^(2-Selmer rank - 2-torsion rank) as per whether 'rank' is set to
+              True or False) is computed.
+
+            - ``output_filename``   -- String, the name of the file to which the
+              output will be saved. Each line of the save file describes a
+              single curve, and consists of seven tab-separated integers:
+              the first is the height of the curve; the following five are
+              the curve's a-invariants, and the final integer is the curve's rank.
+            - ``problems_filename`` -- String: the file name to which problem
+              curves will be written. These are curves for which rank could not
+              be computed. Write format is the same as above, except rank is
+              omitted at the end.
+
+            - ``return_data``       -- (Default True): If set to False, the data
+              is not returned at the end of computation; only written to file.
+
+            - ``print_timing``      -- (Default True): If set to False, wall time
+              of total computation will not be printed.
+
+        OUTPUT:
+
+            - Writes data to file. Each line of the written file consists of seven
+              tab separated entries of the form
+              H, a1, a2, a3, a4, a6, d
+              H: The curve's height
+              a1,...,a6: The curve's a-invariants
+              d: The computed datum for that curve
+
+            - (only if return_data==True) A list consisting of two lists:
+              The first is a list of triples of the form
+              (H, (a1,a2,a3,a4,a6), d)
+              where the entries are as above.
+              The second is a list of curve for which the datum could not be provably
+              computed; each entry of this list is just a pair consisting of height
+              and a-invariants.
+
+        EXAMPLES::
+
+            sage: from ? import *
+            sage: C = CurveEnumerator(model="short_weierstrass")
+            sage: L = C.coefficients_over_height_range(0,4)
+            sage: R = C.two_selmer(L,rank=True,return_data=True,print_timing=False)
+            sage: R[1]
+            []
+            sage: for r in R[0]: print(r)
+            ....: 
+            (4, [0, 0, 0, -1, -2], 1)
+            (4, [0, 0, 0, -1, 2], 0)
+            (4, [0, 0, 0, 0, -2], 1)
+            (4, [0, 0, 0, 0, 2], 1)
+            (4, [0, 0, 0, 1, -2], 1)
+            (4, [0, 0, 0, 1, 2], 1)
+            sage: R = C.two_selmer(L,rank=False,return_data=True,print_timing=False)
+            sage: for r in R[0]: print(r)
+            ....: 
+            (4, [0, 0, 0, -1, -2], 2)
+            (4, [0, 0, 0, -1, 2], 1)
+            (4, [0, 0, 0, 0, -2], 2)
+            (4, [0, 0, 0, 0, 2], 2)
+            (4, [0, 0, 0, 1, -2], 2)
+            (4, [0, 0, 0, 1, 2], 2)
+            sage: R = C.two_selmer(L,reduced=True,print_timing=False)
+            sage: for r in R[0]: print(r)
+            ....: 
+            (4, [0, 0, 0, -1, -2], 1)
+            (4, [0, 0, 0, -1, 2], 0)
+            (4, [0, 0, 0, 0, -2], 1)
+            (4, [0, 0, 0, 0, 2], 1)
+            (4, [0, 0, 0, 1, -2], 0)
+            (4, [0, 0, 0, 1, 2], 0)
+            sage: R = C.two_selmer(L,rank=False,reduced=True,print_timing=False)
+            sage: for r in R[0]: print(r)
+            ....: 
+            (4, [0, 0, 0, -1, -2], 2)
+            (4, [0, 0, 0, -1, 2], 1)
+            (4, [0, 0, 0, 0, -2], 2)
+            (4, [0, 0, 0, 0, 2], 2)
+            (4, [0, 0, 0, 1, -2], 1)
+            (4, [0, 0, 0, 1, 2], 1)
+        """
+        if print_timing:
+            t = time.time()
+
+        out_file  = open(output_filename,"w")
+        prob_file = open(problems_filename,"w")
+        if return_data:
+            output = []
+            problems = []
+        for C in curves:
+            # Attempt to compute datum and write curve+datum to file
+            try:
+                E = EllipticCurve(C[1])
+
+                d = E.selmer_rank()
+                if reduced:
+                    d -= E.two_torsion_rank()
+                if not rank:
+                    d = 2**d
+
+                out_file.write(str(C[0])+"\t")
+                for a in C[1]:
+                    out_file.write(str(a)+"\t")
+                out_file.write(str(d)+"\n")
+                out_file.flush()
+
+                if return_data:
+                    output.append((C[0],C[1],d))
+            # Write to problem file if fail
+            except:
+                prob_file.write(str(C[0])+"\t")
+                for a in C[1]:
+                    prob_file.write(str(a)+"\t")
+                prob_file.write("\n")
+                prob_file.flush()
+
+                if return_data:
+                    problems.append(C)
+        out_file.close()
+        prob_file.close()
+
+        if print_timing:
+            print(time.time()-t)
+        if return_data:
+            return output,problems
+
 
     def averaged_data(self,input, outfile="average_data.txt", return_data=True):
         """
@@ -651,7 +834,6 @@ class CurveEnumerator():
         np.savetxt(outfile, Z)
         if return_data:
            return [(C[0],C[1]) for C in Z]
-
 
     def data_by_height2(L,inv="two_selmer",proof=True,return_data=False,\
                         output_filename="output.txt",problems_filename="problems.txt"):
