@@ -8,7 +8,7 @@ AUTHORS:
 """
 
 #*****************************************************************************
-#       Copyright (C) 2007 William Stein and Simon Spicer
+#       Copyright (C) 2012 William Stein and Simon Spicer
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
 #
@@ -418,7 +418,6 @@ class CurveEnumerator():
             (4, [1, 2], [1])
             sage: L = C._coeffs_from_height(B)
             sage: for ell in L: print ell
-            ...: 
             (4, [0, 0, 0, -1, -2])
             (4, [0, 0, 0, -1, 2])
             (4, [0, 0, 0, 0, -2])
@@ -474,11 +473,10 @@ class CurveEnumerator():
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
             sage: C = CurveEnumerator(family="short_weierstrass")
-            sage: B = C.heights(1,4)[0]; B
+            sage: B = C.heights(1,4); B
             [(1, [1, 1], [0, 1]), (4, [1, 2], [1])]
             sage: L = C._coeffs_from_height_list(B)
-            sage: for ell in L: print(ell)
-            ....:  
+            sage: for ell in L: print(ell) 
             (1, [0, 0, 0, -1, 0])
             (1, [0, 0, 0, 1, 0])
             (1, [0, 0, 0, 0, -1])
@@ -529,7 +527,6 @@ class CurveEnumerator():
             sage: C = CurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(0,4)
             sage: for ell in L: print(ell)
-            ....: 
             (1, [0, 0, 0, -1, 0])
             (1, [0, 0, 0, 1, 0])
             (1, [0, 0, 0, 0, -1])
@@ -647,7 +644,6 @@ class CurveEnumerator():
             sage: R[1]
             []
             sage: for r in R[0]: print(r)
-            ....: 
             (1, [0, 0, 0, -1, 0], 0)
             (1, [0, 0, 0, 1, 0], 0)
             (1, [0, 0, 0, 0, -1], 0)
@@ -764,12 +760,11 @@ class CurveEnumerator():
 
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
             sage: C = CurveEnumerator(family="short_weierstrass")
-            sage: L = C.coefficients_over_height_range(0,4)
+            sage: L = C.coefficients_over_height_range(4,4)
             sage: R = C.two_selmer(L,rank=True,return_data=True,print_timing=False)
             sage: R[1]
             []
             sage: for r in R[0]: print(r)
-            ....: 
             (4, [0, 0, 0, -1, -2], 1)
             (4, [0, 0, 0, -1, 2], 0)
             (4, [0, 0, 0, 0, -2], 1)
@@ -778,7 +773,6 @@ class CurveEnumerator():
             (4, [0, 0, 0, 1, 2], 1)
             sage: R = C.two_selmer(L,rank=False,return_data=True,print_timing=False)
             sage: for r in R[0]: print(r)
-            ....: 
             (4, [0, 0, 0, -1, -2], 2)
             (4, [0, 0, 0, -1, 2], 1)
             (4, [0, 0, 0, 0, -2], 2)
@@ -787,7 +781,6 @@ class CurveEnumerator():
             (4, [0, 0, 0, 1, 2], 2)
             sage: R = C.two_selmer(L,reduced=True,print_timing=False)
             sage: for r in R[0]: print(r)
-            ....: 
             (4, [0, 0, 0, -1, -2], 1)
             (4, [0, 0, 0, -1, 2], 0)
             (4, [0, 0, 0, 0, -2], 1)
@@ -796,7 +789,6 @@ class CurveEnumerator():
             (4, [0, 0, 0, 1, 2], 0)
             sage: R = C.two_selmer(L,rank=False,reduced=True,print_timing=False)
             sage: for r in R[0]: print(r)
-            ....: 
             (4, [0, 0, 0, -1, -2], 2)
             (4, [0, 0, 0, -1, 2], 1)
             (4, [0, 0, 0, 0, -2], 2)
@@ -856,7 +848,7 @@ class CurveEnumerator():
             - ``input`` -- Either: A list where each element is
               (H, (a1,a2,a3,a4,a6), d), and
               H: curve height
-              a1..a6: list of a-invariants of elliptic curve giving that height
+              a1,...,a6: list of a-invariants of elliptic curve giving that height
               d: the type of data that's being averaged, e.g., rank, 2-Selmer,
               Or: String name of a file of array of data, where each line is
               H, a1, a2, a3, a4, a6, d
@@ -880,9 +872,8 @@ class CurveEnumerator():
             sage: C = CurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(0,4)
             sage: R = C.rank(L,return_data=true,print_timing=False)
-            sage: A = C.averaged_data(R,return_data=True)
-            sage: for c in A: print(c)
-            ...: 
+            sage: A = C.averaged_data(R[0],return_data=True); A
+            [(1.0, 0.375), (4.0, 0.42857142857142855)] 
         """
         # Load, format data
         if isinstance(input,str):
