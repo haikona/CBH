@@ -3,3 +3,4 @@
 *.bkup
 *.pyc
 data/
+backup/
