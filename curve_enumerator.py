@@ -33,12 +33,73 @@ from sage.schemes.elliptic_curves.constructor import EllipticCurve
 
 def EllipticCurveEnumerator(family):
     """
-    Return the correct CurveEnumerator family
+    Return the correct CurveEnumerator family.
+
+    INPUT:
+
+    - ``family`` -- string; the family of curves being considered
+      Current options are
+
+      * 'short_weierstrass'
+        Family:             Short Weierstrass
+        Model:              Y^2 = X^3 + A*X + B
+        Height function:    H = min{|A|^3,|B|^2}
+
+      To be implemented in future
+
+      * 'full_weierstrass'
+      * 'rank_one'
+      * 'rank_two'
+      * 'two_torsion'
+      * 'three_torsion'
+      * 'F_1(2)'  # WAS: what are these?  (at least give a reference)
+      * 'F_1(3)'
+      * 'F_1(4)'
+      * 'F_1(2x2)'
+      * 'F_2(2)'
+
+    EXAMPLES::
+
+        sage: C = EllipticCurveEnumerator(); C
+        Height iterator for elliptic curves over Q
+        Family:             Short Weierstrass
+        Model:              Y^2 = X^3 + A*X + B
+        Height function:    H = min{|A|^3,|B|^2}
+
+        sage: C = EllipticCurveEnumerator(family='full_weierstrass')
+        Traceback (most recent call last):
+        ...
+        NotImplementedError: Family not yet implemented.
+
     """
-    raise NotImplementedError()
+
+    if family=="short_weierstrass":
+        return CurveEnumeratorShortWeierstrass()
+    elif family=="full_weierstrass":
+        return CurveEnumeratorFullWeierstrass()
+    elif family=="rank_one":
+        return CurveEnumeratorRankOne()
+    elif family=="rank_two":
+        return CurveEnumeratorRankTwo()
+    elif family=="two_torsion":
+        return CurveEnumeratorTwoTorsion()
+    elif family=="three_torsion":
+        return CurveEnumeratorTreeTorsion()
+    elif family=="F_1(2)":
+        return CurveEnumeratorF_12()
+    elif family=="F_1(3)":
+        return CurveEnumeratorF_13()
+    elif family=="F_1(4)":
+        return CurveEnumeratorF_14()
+    elif family=="F_1(2x2)":
+        return CurveEnumeratorF_12x2()
+    elif family=="F_2(2)":
+        return CurveEnumeratorF_22()
+    else:
+        raise ValueError("'family' must be a recognized Weierstrass family of elliptic curves.")
 
 
-class CurveEnumerator(object):
+class CurveEnumerator_abstract(object):
     r"""
     The CurveEnumerator class will enumerate all elliptic curves
     over Q in a specified Weierstrass form ordered by height, where
@@ -46,107 +107,6 @@ class CurveEnumerator(object):
     as described in the __init__() method.
 
     """
-    def __init__(self, family="short_weierstrass"):
-        """
-        INPUT:
-
-        - ``family`` -- string; the family of curves being considered
-          Current options are
-
-          * 'short_weierstrass'
-            Family:             Short Weierstrass
-            Model:              Y^2 = X^3 + A*X + B
-            Height function:    H = min{|A|^3,|B|^2}
-
-          To be implemented in future
-
-          * 'full_weierstrass'
-          * 'rank_one'
-          * 'rank_two'
-          * 'two_torsion'
-          * 'three_torsion'
-          * 'F_1(2)'  # WAS: what are these?  (at least give a reference)
-          * 'F_1(3)'
-          * 'F_1(4)'
-          * 'F_1(2x2)'
-          * 'F_2(2)'
-
-        EXAMPLES::
-
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(); C
-            Height iterator for elliptic curves over Q
-            Family:             Short Weierstrass
-            Model:              Y^2 = X^3 + A*X + B
-            Height function:    H = min{|A|^3,|B|^2}
-
-            sage: C = CurveEnumerator(family='full_weierstrass')
-            Traceback (most recent call last):
-            ...
-            NotImplementedError: Family not yet implemented.
-        """
-        
-        if family=="short_weierstrass":
-            # The following constants must be Sage Integers; if not, the code breaks lower down
-            self._num_coeffs = ZZ(2)
-            self._pows = (ZZ(3),ZZ(2))
-        elif family=="full_weierstrass":
-            raise NotImplementedError("Family not yet implemented.")
-        elif family=="rank_one":
-            raise NotImplementedError("Family not yet implemented.")
-        elif family=="rank_two":
-            raise NotImplementedError("Family not yet implemented.")
-        elif family=="two_torsion":
-            raise NotImplementedError("Family not yet implemented.")
-        elif family=="three_torsion":
-            raise NotImplementedError("Family not yet implemented.")
-        elif family=="F_1(2)":
-            raise NotImplementedError("Family not yet implemented.")
-        elif family=="F_1(3)":
-            raise NotImplementedError("Family not yet implemented.")
-        elif family=="F_1(4)":
-            raise NotImplementedError("Family not yet implemented.")
-        elif family=="F_1(2x2)":
-            raise NotImplementedError("Family not yet implemented.")
-        elif family=="F_2(2)":
-            raise NotImplementedError("Family not yet implemented.")
-        else:
-            raise ValueError("'family' must be a recognized Weierstrass 
-                               family of elliptic curves")
-
-        self._family = family
-
-
-    def __repr__(self):
-        """
-        Representation of self. Prints what family of curves is being considered,
-        the model description and the height function on that family.
-        
-        EXAMPLES::
-
-# WAS: The import 'from sage.schemes.elliptic_curves.curve_enumerator import *'
-# seems possibly heavy.  I wonder if instead adding a new function to the
-# top level (by putting it in elliptic_curves.all.py) called EllipticCurveEnumerator
-# would be a reasonable?  I like it.
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
-            sage: C
-            Height iterator for elliptic curves over Q
-            Family:             Short Weierstrass
-            Model:              Y^2 = X^3 + A*X + B
-            Height function:    H = min{|A|^3,|B|^2}
-        """
-
-        if self._family=="short_weierstrass":
-            name = "Short Weierstrass"
-            model = "Y^2 = X^3 + A*X + B"
-            height_function = "min{|A|^3,|B|^2}"
-
-        s = "Height iterator for elliptic curves over Q\n"
-        s += "Family:             "+name+"\n"
-        s += "Model:              "+model+"\n"
-        s += "Height function:    H = "+height_function
-        return s
 
     def _height_increment(self,coeffs):
         """
@@ -174,8 +134,7 @@ class CurveEnumerator(object):
 
         EXAMPLES::
 
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: C._height_increment([2,2])
             (9, [2, 3], [1])
             sage: C._height_increment([3,7])
@@ -223,8 +182,7 @@ class CurveEnumerator(object):
 
         EXAMPLES::
 
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: C.next_height(4) 
             (4, [1, 2], [1])
             sage: C.next_height(60)
@@ -277,8 +235,7 @@ class CurveEnumerator(object):
 
         EXAMPLES::
 
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: C.heights(100,150) 
             [(100, [4, 10], [1]), (121, [4, 11], [1]), (125, [5, 11], [0]), (144, [5, 12], [1])]
 
@@ -310,62 +267,6 @@ class CurveEnumerator(object):
                 L.append(C)
         return L
 
-    def _coeffs_to_a_invariants(self, c):
-        """
-        Convert curve coefficients to a-invariants. This is family-specific.
-
-        INPUT:
-
-        - ``c`` -- The list of coefficients of the equation of a curve
-          as per the family model description. See the __init__() method
-          of this class for more info.
-
-        OUTPUT:
-
-        A list of five integers corresponding to the a-invariants of
-        the curve.
-
-        EXAMPLES::
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
-            sage: C._coeffs_to_a_invariants([4,9])
-            [0, 0, 0, 4, 9]
-        """
-        #WAS: this should be rewritten to be object oriented.
-# class CurveEnumerator(object):
-# ...
-# class CurveEnumeratorShortWeierstrass(CurveEnumerator):
-# ...
-# class CurveEnumeratorRankONe(CurveEnumerator):
-# ...
-#
-# def EllipticCurveEnumerator(...):
-#     return right class instance...
-#
-# sage: EllipticCurveEnumerator(...)  # no import needed!
-        if self._family == "short_weierstrass":
-            C = [0,0,0,c[0],c[1]]
-        elif self._family == "rank_one":
-            C = [0,c[0],c[1],c[2],0]
-        elif self._family == "rank_two":
-            a2,a4,b4,a6 = c[0],c[1],c[2],c[3]
-            I = 3*(a4**2)+b4**2-3*a2*a6
-            J = -27/4*(a2**2)*a4**2+18*(a4**2)*b4 - 2*(b4**3) \
-                + 9*a2*b4*a6 - 27*(a6**2)
-            if J.denominator()==4:
-                I = I*16
-                J = J*64
-            C = [0,0,0,-27*I,-27*J]
-        elif self._family == "two_torsion":
-            C = [0,c[0],0,c[1],0]
-        elif self._family == "three_torsion":
-            C = [c[0],0,c[1],0,0]
-        elif self._family == "full_weierstrass":
-            raise NotImplementedError("Not yet implemented.")
-        elif self._family == "F_1(2)":
-            C = [0,c[0]**2-c[1]-c[2],0,c[1]*c[2],0]
-
-        return C
 
     def _is_singular(self, C):
         """
@@ -382,8 +283,8 @@ class CurveEnumerator(object):
         True or False
 
         EXAMPLES::
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
+
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: C._is_singular([0,0,0,3,2])
             False
             sage: EllipticCurve([0,0,0,3,2])
@@ -434,10 +335,9 @@ class CurveEnumerator(object):
         A list of 2-tuples, each consisting of the given height,
         followed by a tuple of a-invariants of a curve of that height.
 
-        EXAMPLES:
+        EXAMPLES::
 
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: B = C.next_height(4); B
             (4, [1, 2], [1])
             sage: L = C._coeffs_from_height(B)
@@ -493,10 +393,9 @@ class CurveEnumerator(object):
         a-invariants defining an elliptic curve over Q of that height.
         The list will be ordered by increasing height.
 
-        EXAMPLES:
+        EXAMPLES::
 
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: B = C.heights(1,4); B
             [(1, [1, 1], [0, 1]), (4, [1, 2], [1])]
             sage: L = C._coeffs_from_height_list(B)
@@ -545,10 +444,9 @@ class CurveEnumerator(object):
         a-invariants defining an elliptic curve over Q of that height.
         The list will be ordered by increasing height.
 
-        EXAMPLES:
+        EXAMPLES::
 
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(0,4)
             sage: for ell in L: print(ell)
             (1, [0, 0, 0, -1, 0])
@@ -598,7 +496,7 @@ class CurveEnumerator(object):
           slower); if True, GRH will be assumed and computation
           will eb quicker.
 
-        EXAMPLES:
+        EXAMPLES::
         """
         if proof == False:
             #WAS: this can't work since "magma" is not in scope.
@@ -672,8 +570,7 @@ class CurveEnumerator(object):
 
         EXAMPLES::
 
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(0,4)
             sage: R = C.rank(L,return_data=True,print_timing=False)
             sage: R[1]
@@ -793,8 +690,7 @@ class CurveEnumerator(object):
 
         EXAMPLES::
 
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(4,4)
             sage: R = C.two_selmer(L,rank=True,return_data=True,print_timing=False)
             sage: R[1]
@@ -907,8 +803,7 @@ class CurveEnumerator(object):
 
         EXAMPLES::
 
-            sage: from sage.schemes.elliptic_curves.curve_enumerator import *
-            sage: C = CurveEnumerator(family="short_weierstrass")
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(0,4)
             sage: R = C.rank(L,return_data=true,print_timing=False)
             sage: A = C.averaged_data(R[0],return_data=True); A
@@ -942,69 +837,207 @@ class CurveEnumerator(object):
            return [(C[0],C[1]) for C in Z]
 
 
-class CurveEnumeratorShortWeierstrass(CurveEnumerator):
+class CurveEnumeratorShortWeierstrass(CurveEnumerator_abstract):
     """
     Short Weierstrass Family
     """
-    raise NotImplementedError()
+    def __init__(self):
+        """
+        INPUT:
+
+        EXAMPLES::
+
+            sage: C = EllipticCurveEnumerator(); C
+            Height iterator for elliptic curves over Q
+            Family:             Short Weierstrass
+            Model:              Y^2 = X^3 + A*X + B
+            Height function:    H = min{|A|^3,|B|^2}
+        """
+        # The following constants must be Sage Integers; if not, the code breaks lower down
+        self._num_coeffs = ZZ(2)
+        self._pows = (ZZ(3),ZZ(2))    
+
+    def __repr__(self):
+        """
+        Representation of self. Prints what family of curves is being considered,
+        the model description and the height function on that family.
+        
+        EXAMPLES::
+
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
+            sage: C
+            Height iterator for elliptic curves over Q
+            Family:             Short Weierstrass
+            Model:              Y^2 = X^3 + A*X + B
+            Height function:    H = min{|A|^3,|B|^2}
+        """
+
+        name = "Short Weierstrass"
+        model = "Y^2 = X^3 + A*X + B"
+        height_function = "min{|A|^3,|B|^2}"
+
+        s = "Height iterator for elliptic curves over Q\n"
+        s += "Family:             "+name+"\n"
+        s += "Model:              "+model+"\n"
+        s += "Height function:    H = "+height_function
+        return s
+
+    def _coeffs_to_a_invariants(self, c):
+        """
+        Convert curve coefficients to a-invariants. This is family-specific.
+
+        INPUT:
+
+        - ``c`` -- The list of coefficients of the equation of a curve
+          as per the family model description. See the __init__() method
+          of this class for more info.
+
+        OUTPUT:
+
+        A list of five integers corresponding to the a-invariants of
+        the curve.
+
+        EXAMPLES::
+
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
+            sage: C._coeffs_to_a_invariants([4,9])
+            [0, 0, 0, 4, 9]
+        """
+        return [0,0,0,c[0],c[1]]
 
 
-class CurveEnumeratorFullWeierstrass(CurveEnumerator):
+class CurveEnumeratorFullWeierstrass(CurveEnumerator_abstract):
     """
     Short Weierstrass Family
     """
-    raise NotImplementedError()
+    def __init__(self):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        raise NotImplementedError()
+
+    def _coeffs_to_a_invariants(self, c):
+        raise NotImplementedError()
 
 
-class CurveEnumeratorRankOne(CurveEnumerator):
+class CurveEnumeratorRankOne(CurveEnumerator_abstract):
     """
     """
-    raise NotImplementedError()
+    def __init__(self):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        raise NotImplementedError()
+
+    def _coeffs_to_a_invariants(self, c):
+        return [0,c[0],c[1],c[2],0]
+
+class CurveEnumeratorRankTwo(CurveEnumerator_abstract):
+    """
+    """
+    def __init__(self):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        raise NotImplementedError()
+
+    def _coeffs_to_a_invariants(self, c):
+        a2,a4,b4,a6 = c[0],c[1],c[2],c[3]
+        I = 3*(a4**2)+b4**2-3*a2*a6
+        J = -27/4*(a2**2)*a4**2+18*(a4**2)*b4 - 2*(b4**3) \
+            + 9*a2*b4*a6 - 27*(a6**2)
+        if J.denominator()==4:
+            I = I*16
+            J = J*64
+        C = [0,0,0,-27*I,-27*J]
 
 
-class CurveEnumeratorRankTwo(CurveEnumerator):
+class CurveEnumeratorTwoTorsion(CurveEnumerator_abstract):
     """
     """
-    raise NotImplementedError()
+    def __init__(self):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        raise NotImplementedError()
+
+    def _coeffs_to_a_invariants(self, c):
+        return [0,c[0],0,c[1],0]
 
 
-class CurveEnumeratorTwoTorsion(CurveEnumerator):
+class CurveEnumeratorThreeTorsion(CurveEnumerator_abstract):
     """
     """
-    raise NotImplementedError()
+    def __init__(self):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        raise NotImplementedError()
+
+    def _coeffs_to_a_invariants(self, c):
+        return [c[0],0,c[1],0,0]
 
 
-class CurveEnumeratorThreeTorsion(CurveEnumerator):
+class CurveEnumeratorF_12(CurveEnumerator_abstract):
     """
     """
-    raise NotImplementedError()
+    def __init__(self):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        raise NotImplementedError()
+
+    def _coeffs_to_a_invariants(self, c):
+        return [0,c[0]**2-c[1]-c[2],0,c[1]*c[2],0]
 
 
-class CurveEnumeratorF_12(CurveEnumerator):
+class CurveEnumeratorF_13(CurveEnumerator_abstract):
     """
     """
-    raise NotImplementedError()
+    def __init__(self):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        raise NotImplementedError()
+
+    def _coeffs_to_a_invariants(self, c):
+        raise NotImplementedError()
 
 
-class CurveEnumeratorF_13(CurveEnumerator):
+class CurveEnumeratorF_14(CurveEnumerator_abstract):
     """
     """
-    raise NotImplementedError()
+    def __init__(self):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        raise NotImplementedError()
+
+    def _coeffs_to_a_invariants(self, c):
+        raise NotImplementedError()
 
 
-class CurveEnumeratorF_14(CurveEnumerator):
+class CurveEnumeratorF_12x2(CurveEnumerator_abstract):
     """
     """
-    raise NotImplementedError()
+    def __init__(self):
+        raise NotImplementedError()
+
+    def __repr__(self):
+        raise NotImplementedError()
+
+    def _coeffs_to_a_invariants(self, c):
+        raise NotImplementedError()
 
 
-class CurveEnumeratorF_12x2(CurveEnumerator):
+class CurveEnumeratorF_22(CurveEnumerator_abstract):
     """
     """
-    raise NotImplementedError()
+    def __init__(self):
+        raise NotImplementedError()
 
+    def __repr__(self):
+        raise NotImplementedError()
 
-class CurveEnumeratorF_22(CurveEnumerator):
-    """
-    """
-    raise NotImplementedError()
+    def _coeffs_to_a_invariants(self, c):
+        raise NotImplementedError()
