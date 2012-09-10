@@ -23,8 +23,6 @@ AUTHORS:
 #*****************************************************************************
 
 import time
-#WAS: do *NOT* import numpy at module scope, since it wastes time -- import it right before you use it.
-import numpy as np
 from copy import deepcopy
 from sage.rings.integer_ring import IntegerRing, ZZ
 from sage.functions.other import floor,ceil
@@ -32,7 +30,15 @@ from sage.combinat.cartesian_product import CartesianProduct
 from sage.misc.misc import powerset, srange
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
 
-class CurveEnumerator():
+
+def EllipticCurveEnumerator(family):
+    """
+    Return the correct CurveEnumerator family
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumerator(object):
     r"""
     The CurveEnumerator class will enumerate all elliptic curves
     over Q in a specified Weierstrass form ordered by height, where
@@ -44,26 +50,26 @@ class CurveEnumerator():
         """
         INPUT:
 
-            - ``family`` -- string; the family of curves being considered
-              Current options are
+        - ``family`` -- string; the family of curves being considered
+          Current options are
 
-              * 'short_weierstrass'
-                Family:             Short Weierstrass
-                Model:              Y^2 = X^3 + A*X + B
-                Height function:    H = min{|A|^3,|B|^2}
-                
-              To be implemented in future
+          * 'short_weierstrass'
+            Family:             Short Weierstrass
+            Model:              Y^2 = X^3 + A*X + B
+            Height function:    H = min{|A|^3,|B|^2}
 
-              * 'full_weierstrass'
-              * 'rank_one'
-              * 'rank_two'
-              * 'two_torsion'
-              * 'three_torsion'
-              * 'F_1(2)'  # WAS: what are these?  (at least give a reference)
-              * 'F_1(3)'
-              * 'F_1(4)'
-              * 'F_1(2x2)'
-              * 'F_2(2)'
+          To be implemented in future
+
+          * 'full_weierstrass'
+          * 'rank_one'
+          * 'rank_two'
+          * 'two_torsion'
+          * 'three_torsion'
+          * 'F_1(2)'  # WAS: what are these?  (at least give a reference)
+          * 'F_1(3)'
+          * 'F_1(4)'
+          * 'F_1(2x2)'
+          * 'F_2(2)'
 
         EXAMPLES::
 
@@ -81,8 +87,8 @@ class CurveEnumerator():
         """
         
         if family=="short_weierstrass":
+            # The following constants must be Sage Integers; if not, the code breaks lower down
             self._num_coeffs = ZZ(2)
-            #WAS: put in comment or even assertion below verifying that these are Integer type, since if they aren't, your code will break elsewhere
             self._pows = (ZZ(3),ZZ(2))
         elif family=="full_weierstrass":
             raise NotImplementedError("Family not yet implemented.")
@@ -105,9 +111,8 @@ class CurveEnumerator():
         elif family=="F_2(2)":
             raise NotImplementedError("Family not yet implemented.")
         else:
-            # WAS: I prefer ValueError instead of IOError; \ not needed due to parens
-            raise IOError("'family' must be a recognized Weierstrass "\
-            +"family of elliptic curves")
+            raise ValueError("'family' must be a recognized Weierstrass 
+                               family of elliptic curves")
 
         self._family = family
 
@@ -115,8 +120,7 @@ class CurveEnumerator():
     def __repr__(self):
         """
         Representation of self. Prints what family of curves is being considered,
-         the model description and the height function on that family.
-        # WAS: delete space in front of the 
+        the model description and the height function on that family.
         
         EXAMPLES::
 
@@ -147,28 +151,26 @@ class CurveEnumerator():
     def _height_increment(self,coeffs):
         """
         Given a tuple of coefficients of a Weierstrass equation with
-         a certain height, return the next largest permissable height
-         and the range of coefficients that achieve that height.
-        # WAS: weird spaces at beginning of line above. 
-
-        INPUT:
-        # WAS: no indent, as I explained.
+        a certain height, return the next largest permissable height
+        and the range of coefficients that achieve that height.
         
-            - ``coeffs`` -- A list or tuple of coefficients of the
-              same length as the number of coeffients in the model.
+        INPUT:
+        
+        - ``coeffs`` -- A list or tuple of coefficients of the
+          same length as the number of coeffients in the model.
 
         OUTPUT:
-        # WAS: no indent, as I explained.
-            - A tuple of three entries consisting of:
-              -- the smallest permissable height greater than the height
-                 of the input coefficient list;
-              -- a list of coeffients, some of which attain the above
-                 height;
-              -- a list of indices of which of the coefficients in the
-                 above list achieve this height. The remaining entries
-                 in the coefficient list indicate the maximum absolute
-                 value that coefficient can attain without affecting the
-                 curve's height.  
+        
+        A tuple of three entries consisting of:
+        1. The smallest permissable height greater than the height
+           of the input coefficient list;
+        2. A list of coeffients, some of which attain the above
+           height;
+        3. A list of indices of which of the coefficients in the
+           above list achieve this height. The remaining entries
+           in the coefficient list indicate the maximum absolute
+           value that coefficient can attain without affecting the
+           curve's height.  
 
         EXAMPLES::
 
@@ -191,13 +193,11 @@ class CurveEnumerator():
                 index.append(i)
         return (next_height,new_coeffs,index)
 
-    def next_height(self,N):
+    def next_height(self, N):
         """
         Return the next permissable height greater than or equal to N for
-         curves in self's family.
+        curves in self's family.
 
-        #WAS: weird spaces 
-        
         WARNING: This function my return a height for which only singular
                   curves exist. For example, in the short Weierstrass case
                   height 0 is permissable, as the curve Y^2 = X^3 (uniquely)
@@ -205,22 +205,21 @@ class CurveEnumerator():
 
         INPUT:
 
-            - ``N`` -- A non-negative integer
+        - ``N`` -- A non-negative integer
 
         OUTPUT:
 
-            - A tuple consisting of three elements of the form
-              (H, C, I) such that 
-              H: The smallest height >= N
-              C: A list of coefficients for curves of this height
-              I: A list of indices indicating which of the above coefficients
-              achieve this height. The remaining values in C  indicate the 
-              max absolute value those coefficients are allowed to obtain
-              without altering the height.
+        A tuple consisting of three elements of the form (H, C, I) such that 
+        1. H is the smallest height >= N
+        2. C is a list of coefficients for curves of this height
+        3. I is list of indices indicating which of the above coefficients
+           achieve this height. The remaining values in C  indicate the 
+           max absolute value those coefficients are allowed to obtain
+           without altering the height.
 
-              For example, the tuple (4, [1, 2], [1]) for the short Weierstrass
-              case denotes set of curves with height 4; these are all of the
-              form Y^2 = X^3 + A*X + B, where B=2 and A ranges between -1 and 1.
+           For example, the tuple (4, [1, 2], [1]) for the short Weierstrass
+           case denotes set of curves with height 4; these are all of the
+           form Y^2 = X^3 + A*X + B, where B=2 and A ranges between -1 and 1.
 
         EXAMPLES::
 
@@ -237,16 +236,14 @@ class CurveEnumerator():
             AssertionError: Input must be non-negative integer.
         """
 
-        #WAS: you're not asserting N is an integer here:
-        #WAS: In fact, just remove all constraint N.
-        #WAS: then do      "ZZ(ceil(N**(1/n)))"
-        assert N>=0, "Input must be non-negative integer."
+        # Negative heights don't exist
+        if N<0: N=ZZ(0)
 
         coeffs = [ceil(N**(1/n))-1 for n in self._pows]
         height = max([coeffs[i]**(self._pows[i]) for i in range(self._num_coeffs)])
         return self._height_increment(coeffs)
 
-    def heights(self,lowerbound,upperbound):  #WAS:put spaces after commas, e.g., (self, lowerbound, upperbound); there are many instances of this all over your code... so fix them all
+    def heights(self, lowerbound, upperbound):  
         """
         Return a list of permissable curve heights in the specified range
          (bounds inclusive), and for each height the equation coefficients
@@ -259,24 +256,24 @@ class CurveEnumerator():
 
         INPUT:
 
-            - ``lowerbound`` -- Lower bound for the height range;
-            - ``upperbound`` -- Upper bound for the height range. Heights
-              returned are up to and including both bounds.
+        - ``lowerbound`` -- Lower bound for the height range;
+        - ``upperbound`` -- Upper bound for the height range. Heights
+          returned are up to and including both bounds.
 
         OUTPUT:
 
-            - A list of tuples, each consisting of three elements of the form
-              (H, C, I) such that 
-              H: The smallest height >= N
-              C: A list of coefficients for curves of this height
-              I: A list of indices indicating which of the above coefficients
-              achieve this height. The remaining values in C  indicate the 
-              max absolute value those coefficients are allowed to obtain
-              without altering the height.
+        A list of tuples, each consisting of three elements of the form
+        (H, C, I) such that 
+        1. H is the smallest height >= N
+        2. C is a list of coefficients for curves of this height
+        3. I is a list of indices indicating which of the above coefficients
+           achieve this height. The remaining values in C  indicate the 
+           max absolute value those coefficients are allowed to obtain
+           without altering the height.
 
-              For example, the tuple (4, [1, 2], [1]) for the short Weierstrass
-              case denotes set of curves with height 4; these are all of the
-              form Y^2 = X^3 + A*X + B, where B=2 and A ranges between -1 and 1.
+           For example, the tuple (4, [1, 2], [1]) for the short Weierstrass
+           case denotes set of curves with height 4; these are all of the
+           form Y^2 = X^3 + A*X + B, where B=2 and A ranges between -1 and 1.
 
         EXAMPLES::
 
@@ -305,7 +302,7 @@ class CurveEnumerator():
         L = []
         while height <= upperbound:
             C = self._height_increment(coeffs)
-            if C[0]>upperbound:  #WAS: space around ">"
+            if C[0] > upperbound:
                 break
             else:
                 height = C[0]
@@ -313,20 +310,20 @@ class CurveEnumerator():
                 L.append(C)
         return L
 
-    def _coeffs_to_a_invariants(self,c):
+    def _coeffs_to_a_invariants(self, c):
         """
         Convert curve coefficients to a-invariants. This is family-specific.
 
         INPUT:
 
-            - ``c`` -- The list of coefficients of the equation of a curve
-              as per the family model description. See the __init__() method
-              of this class for more info.
+        - ``c`` -- The list of coefficients of the equation of a curve
+          as per the family model description. See the __init__() method
+          of this class for more info.
 
         OUTPUT:
 
-            - A list of five integers corresponding to the a-invariants of
-              the curve.
+        A list of five integers corresponding to the a-invariants of
+        the curve.
 
         EXAMPLES::
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
@@ -370,19 +367,19 @@ class CurveEnumerator():
 
         return C
 
-    def _is_singular(self,C):
+    def _is_singular(self, C):
         """
         Tests if the a-invariants in 5-tuple C specify a singular
          elliptic curve.
 
         INPUT:
 
-            - ``C`` -- A 5-tuple/list of a-invariants of a potential
-              elliptic curve over Q
+        - ``C`` -- A 5-tuple/list of a-invariants of a potential
+          elliptic curve over Q
 
         OUTPUT:
 
-            - True or False
+        True or False
 
         EXAMPLES::
             sage: from sage.schemes.elliptic_curves.curve_enumerator import *
@@ -412,30 +409,30 @@ class CurveEnumerator():
         Delta = -(b2**2)*b8 - 8*(b4**3) - 27*(b6**2) + 9*b2*b4*b6
         return Delta==0
 
-    def _coeffs_from_height(self,height_tuple):
+    def _coeffs_from_height(self, height_tuple):
         """
         Returns a list of tuples of a-invariants of all curves
          described by height_tuple.
 
         INPUT:
 
-            - ``height_tuple`` -- A tuple of the form
-              (H, C, I) such that 
-              H: The smallest height >= N
-              C: A list of coefficients for curves of this height
-              I: A list of indices indicating which of the above coefficients
-              achieve this height. The remaining values in C  indicate the 
-              max absolute value those coefficients are allowed to obtain
-              without altering the height.
+        - ``height_tuple`` -- A tuple of the form
+          (H, C, I) such that 
+          H: The smallest height >= N
+          C: A list of coefficients for curves of this height
+          I: A list of indices indicating which of the above coefficients
+          achieve this height. The remaining values in C  indicate the 
+          max absolute value those coefficients are allowed to obtain
+          without altering the height.
 
-              For example, the tuple (4, [1, 2], [1]) for the short Weierstrass
-              case denotes set of curves with height 4; these are all of the
-              form Y^2 = X^3 + A*X + B, where B=2 and A ranges between -1 and 1.
+          For example, the tuple (4, [1, 2], [1]) for the short Weierstrass
+          case denotes set of curves with height 4; these are all of the
+          form Y^2 = X^3 + A*X + B, where B=2 and A ranges between -1 and 1.
 
         OUTPUT:
 
-            - A list of 2-tuples, each consisting of the given height,
-              followed by a tuple of a-invariants of a curve of that height.
+        A list of 2-tuples, each consisting of the given height,
+        followed by a tuple of a-invariants of a curve of that height.
 
         EXAMPLES:
 
@@ -479,22 +476,22 @@ class CurveEnumerator():
                 L2.append((height,C))
         return L2
 
-    def _coeffs_from_height_list(self,coefficient_list):
+    def _coeffs_from_height_list(self, coefficient_list):
         """
         Return all height/a-invariant tuples of elliptic curves from a
          list of curve height/coefficient/index tuples.
 
         INPUT:
 
-            - ``coefficient_list`` -- A list of height/coefficient/index
-              tuples. See the documentation for _height_increment() for
-              a description of this format.
+        - ``coefficient_list`` -- A list of height/coefficient/index
+          tuples. See the documentation for _height_increment() for
+          a description of this format.
 
         OUTPUT:
 
-            - A list of tuples, each consisting of a height and a tuple of
-              a-invariants defining an elliptic curve over Q of that height.
-              The list will be ordered by increasing height.
+        A list of tuples, each consisting of a height and a tuple of
+        a-invariants defining an elliptic curve over Q of that height.
+        The list will be ordered by increasing height.
 
         EXAMPLES:
 
@@ -524,29 +521,29 @@ class CurveEnumerator():
             L2 += self._coeffs_from_height(C)
         return L2
 
-    def coefficients_over_height_range(self,lowerbound,upperbound,\
-                                       savefile=None,return_data=True):
+    def coefficients_over_height_range(self, lowerbound, upperbound,\
+                                       savefile=None, return_data=True):
         """
         Return all a-invariant tuples of elliptic curves over a given
          height range, bounds inclusive.
 
         INPUT:
 
-            - ``lowerbound``  -- The lower height bound
-            - ``upperbound``  -- The upper height bound
-            - ``savefile``    -- String: the name of a file to which the
-              output will be saved. Each line of the save file describes
-              a single curve, and consists of six tab-separated integers;
-              the first is the height of the curve, and the following five
-              its a-invariants.
-            - ``return_data`` -- (Default: True) If False, the computed
-              data will not be returned.
+        - ``lowerbound``  -- The lower height bound
+        - ``upperbound``  -- The upper height bound
+        - ``savefile``    -- String: the name of a file to which the
+          output will be saved. Each line of the save file describes
+          a single curve, and consists of six tab-separated integers;
+          the first is the height of the curve, and the following five
+          its a-invariants.
+        - ``return_data`` -- (Default: True) If False, the computed
+          data will not be returned.
 
         OUTPUT:
 
-            - A list of tuples, each consisting of a height and a tuple of
-              a-invariants defining an elliptic curve over Q of that height.
-              The list will be ordered by increasing height.
+        A list of tuples, each consisting of a height and a tuple of
+        a-invariants defining an elliptic curve over Q of that height.
+        The list will be ordered by increasing height.
 
         EXAMPLES:
 
@@ -588,18 +585,18 @@ class CurveEnumerator():
         if return_data:
             return L
 
-    def _set_magma_class_group_bounds(proof = True):
+    def _set_magma_class_group_bounds(proof=True):
         """
         Auxiliary function; set class group computation method
          in Magma (used in computing 3-Selmer group size)
 
         INPUT:
 
-            - ``proof`` -- True or False; If False, the Generalized
-              Riemann Hypothesis will not be assumed in the computing
-              of class group bounds in Magma (and thus will be
-              slower); if True, GRH will be assumed and computation
-              will eb quicker.
+        - ``proof`` -- True or False; If False, the Generalized
+          Riemann Hypothesis will not be assumed in the computing
+          of class group bounds in Magma (and thus will be
+          slower); if True, GRH will be assumed and computation
+          will eb quicker.
 
         EXAMPLES:
         """
@@ -612,35 +609,35 @@ class CurveEnumerator():
 
 
     #WAS: make output_filename (etc.) optional
-    def rank(self,curves,output_filename="rank_output.txt",\
+    def rank(self, curves, output_filename="rank_output.txt",\
              problems_filename="rank_problems.txt",\
-             return_data=True,use_database=True,use_only_mwrank=False,\
+             return_data=True, use_database=True, use_only_mwrank=False,\
              print_timing=True):
         r"""
         Compute the algebraic rank for a list of curves ordered by height.
 
         INPUT:
  
-            - ``curves``            -- A list of height/a-invariant tuples of
-              curves, as returned by the coefficients_over_height_range() method
-              Each tuple is of the form
-              (H, [a1,a2,a3,a4,a6]) where
-              H is the height of the curve, and
-              [a1,...,a6] the curve's a-invariants
+        - ``curves``            -- A list of height/a-invariant tuples of
+          curves, as returned by the coefficients_over_height_range() method
+          Each tuple is of the form
+          (H, [a1,a2,a3,a4,a6]) where
+          H is the height of the curve, and
+          [a1,...,a6] the curve's a-invariants
 
-            - ``output_filename``   -- String, the name of the file to which the
-              output will be saved. Each line of the save file describes a
-              single curve, and consists of seven tab-separated integers:
-              the first is the height of the curve; the following five are
-              the curve's a-invariants, and the final integer is the curve's rank.
+        - ``output_filename``   -- String, the name of the file to which the
+          output will be saved. Each line of the save file describes a
+          single curve, and consists of seven tab-separated integers:
+          the first is the height of the curve; the following five are
+          the curve's a-invariants, and the final integer is the curve's rank.
 
-            - ``problems_filename`` -- String: the file name to which problem
-              curves will be written. These are curves for which rank could not
-              be computed. Write format is the same as above, except rank is
-              omitted at the end.
+        - ``problems_filename`` -- String: the file name to which problem
+          curves will be written. These are curves for which rank could not
+          be computed. Write format is the same as above, except rank is
+          omitted at the end.
 
-            - ``return_data``       -- (Default True): If set to False, the data
-              is not returned at the end of computation; only written to file.
+        - ``return_data``       -- (Default True): If set to False, the data
+          is not returned at the end of computation; only written to file.
 
 #WAS: maybe use_cremonadb?  what about other databases?
             - ``use_database``      -- (Default True): If set to False, the 
@@ -649,29 +646,29 @@ class CurveEnumerator():
 (..., **rank_opts)
 .rank(..., **rank_opts)
 
-            - ``use_only_mwrank``   -- (Default False): If set to True, will not
-              try to use analytic methods to compute rank before consulting the
-              Cremona database
+        - ``use_only_mwrank``   -- (Default False): If set to True, will not
+          try to use analytic methods to compute rank before consulting the
+          Cremona database
 
-            - ``print_timing``      -- (Default True): If set to False, wall time
-              of total computation will not be printed.
+        - ``print_timing``      -- (Default True): If set to False, wall time
+          of total computation will not be printed.
 
         OUTPUT:
 
-            - Writes data to file. Each line of the written file consists of seven
-              tab separated entries of the form
-              H, a1, a2, a3, a4, a6, d  #WAS: delete the commas -- they are tabs!??
-              H: The curve's height
-              a1,...,a6: The curve's a-invariants
-              d: The computed datum for that curve
+        Writes data to file. Each line of the written file consists of seven
+        tab separated entries of the form
+        H  a1  a2  a3  a4  a6  d
+        1. H is the curve's height
+        2. a1,...,a6 are the curve's a-invariants
+        3. d is the computed datum for that curve
 
-            - (only if return_data==True) A list consisting of two lists:
-              The first is a list of triples of the form
-              (H, (a1,a2,a3,a4,a6), d)
-              where the entries are as above.
-              The second is a list of curve for which the datum could not be provably
-              computed; each entry of this list is just a pair consisting of height
-              and a-invariants.
+        (only if return_data==True) A list consisting of two lists:
+        The first is a list of triples of the form
+        (H, (a1,a2,a3,a4,a6), d)
+        where the entries are as above.
+        The second is a list of curve for which the datum could not be provably
+        computed; each entry of this list is just a pair consisting of height
+        and a-invariants.
 
         EXAMPLES::
 
@@ -736,63 +733,63 @@ class CurveEnumerator():
         if return_data:
             return output,problems
 
-    def two_selmer(self,curves,rank=True,reduced=False,
-                   output_filename="rank_output.txt",problems_filename="rank_problems.txt",\
-                   return_data=True,print_timing=True):
+    def two_selmer(self, curves,rank=True, reduced=False,
+                   output_filename="rank_output.txt", problems_filename="rank_problems.txt",\
+                   return_data=True, print_timing=True):
         r"""
         Compute rank or size of two-Selmer for a list of curves ordered by height.
 
         INPUT:
  
-            - ``curves``            -- A list of height/a-invariant tuples of
-              curves, as returned by the coefficients_over_height_range() method.
-              Each tuple is of the form
-              (H, [a1,a2,a3,a4,a6]) where
-              H is the height of the curve, and
-              [a1,...,a6] the curve's a-invariants
+        - ``curves``            -- A list of height/a-invariant tuples of
+          curves, as returned by the coefficients_over_height_range() method.
+          Each tuple is of the form
+          (H, [a1,a2,a3,a4,a6]) where
+          H is the height of the curve, and
+          [a1,...,a6] the curve's a-invariants
 
-            - ``rank``              -- (Default True) Compute the rank versus size
-              of the curve's 2-Selmer group. If True, rank is computed; if set to
-              False size (i.e. 2^rank) is computed instead.
+        - ``rank``              -- (Default True) Compute the rank versus size
+          of the curve's 2-Selmer group. If True, rank is computed; if set to
+          False size (i.e. 2^rank) is computed instead.
 
-            - ``reduced``           -- (Default False) Compute full 2-Selmer or
-              reduced 2-Selmer. If True, full 2-Selmer is computed; if False, the
-              reduced group rank/size (i.e. 2-Selmer rank - 2-torsion rank or
-              2^(2-Selmer rank - 2-torsion rank) as per whether 'rank' is set to
-              True or False) is computed.
+        - ``reduced``           -- (Default False) Compute full 2-Selmer or
+          reduced 2-Selmer. If True, full 2-Selmer is computed; if False, the
+          reduced group rank/size (i.e. 2-Selmer rank - 2-torsion rank or
+          2^(2-Selmer rank - 2-torsion rank) as per whether 'rank' is set to
+          True or False) is computed.
 
-            - ``output_filename``   -- String, the name of the file to which the
-              output will be saved. Each line of the save file describes a
-              single curve, and consists of seven tab-separated integers:
-              the first is the height of the curve; the following five are
-              the curve's a-invariants, and the final integer is the curve's rank.
-            - ``problems_filename`` -- String: the file name to which problem
-              curves will be written. These are curves for which rank could not
-              be computed. Write format is the same as above, except rank is
-              omitted at the end.
+        - ``output_filename``   -- String, the name of the file to which the
+          output will be saved. Each line of the save file describes a
+          single curve, and consists of seven tab-separated integers:
+          the first is the height of the curve; the following five are
+          the curve's a-invariants, and the final integer is the curve's rank.
+        - ``problems_filename`` -- String: the file name to which problem
+          curves will be written. These are curves for which rank could not
+          be computed. Write format is the same as above, except rank is
+          omitted at the end.
 
-            - ``return_data``       -- (Default True): If set to False, the data
-              is not returned at the end of computation; only written to file.
+        - ``return_data``       -- (Default True): If set to False, the data
+          is not returned at the end of computation; only written to file.
 
-            - ``print_timing``      -- (Default True): If set to False, wall time
-              of total computation will not be printed.
+        - ``print_timing``      -- (Default True): If set to False, wall time
+          of total computation will not be printed.
 
         OUTPUT:
 
-            - Writes data to file. Each line of the written file consists of seven
-              tab separated entries of the form
-              H, a1, a2, a3, a4, a6, d
-              H: The curve's height
-              a1,...,a6: The curve's a-invariants
-              d: The computed datum for that curve
+         Writes data to file. Each line of the written file consists of seven
+         tab separated entries of the form
+         H, a1, a2, a3, a4, a6, d
+         H: The curve's height
+         a1,...,a6: The curve's a-invariants
+         d: The computed datum for that curve
 
-            - (only if return_data==True) A list consisting of two lists:
-              The first is a list of triples of the form
-              (H, (a1,a2,a3,a4,a6), d)
-              where the entries are as above.
-              The second is a list of curve for which the datum could not be provably
-              computed; each entry of this list is just a pair consisting of height
-              and a-invariants.
+         (only if return_data==True) A list consisting of two lists:
+         The first is a list of triples of the form
+         (H, (a1,a2,a3,a4,a6), d)
+         where the entries are as above.
+         The second is a list of curve for which the datum could not be provably
+         computed; each entry of this list is just a pair consisting of height
+         and a-invariants.
 
         EXAMPLES::
 
@@ -880,29 +877,33 @@ class CurveEnumerator():
             return output,problems
 
 
-    def averaged_data(self,input, outfile="average_data.txt", return_data=True):
+    def averaged_data(self, input, outfile="average_data.txt", return_data=True):
         """
         INPUT:
-            - ``input`` -- Either: A list where each element is
-              (H, (a1,a2,a3,a4,a6), d), and
-              H: curve height
-              a1,...,a6: list of a-invariants of elliptic curve giving that height
-              d: the type of data that's being averaged, e.g., rank, 2-Selmer,
-              Or: String name of a file of array of data, where each line is
-              H, a1, a2, a3, a4, a6, d
-              where the elements are as above
 
-            - ``outfile`` -- String: The name of the output file
-            - ``return_data`` -- (Default: True) If set to False, the computed
-              data is not returned.
+        - ``input`` -- Either: A list where each element is
+          (H, (a1,a2,a3,a4,a6), d), and
+          H: curve height
+          a1,...,a6: list of a-invariants of elliptic curve giving that height
+          d: the type of data that's being averaged, e.g., rank, 2-Selmer,
+          Or: String name of a file of array of data, where each line is
+          H, a1, a2, a3, a4, a6, d
+          where the elements are as above
+
+        - ``outfile`` -- String: The name of the output file
+        - ``return_data`` -- (Default: True) If set to False, the computed
+          data is not returned.
 
         OUTPUT:
-            - Writes the averaged data to file, where each line is of the form
-              H, a
-              where H is height, and a the average datum up to that height
-            - (only if return_data==True) returns a list of tuples of the form
-              (H, a)
-              where H is height, and a the average datum up to that height
+        
+        Writes the averaged data to file, where the two tab-separated elements
+        of each line are of the form
+        H  a
+        where H is height, and a the average datum up to that height
+        
+        (only if return_data==True) returns a list of tuples of the form
+        (H, a)
+        where H is height, and a the average datum up to that height
 
         EXAMPLES::
 
@@ -913,6 +914,8 @@ class CurveEnumerator():
             sage: A = C.averaged_data(R[0],return_data=True); A
             [(1.0, 0.375), (4.0, 0.42857142857142855)] 
         """
+        import numpy as np
+
         # Load, format data
         if isinstance(input,str):
             data = np.loadtxt(input)
@@ -937,3 +940,71 @@ class CurveEnumerator():
         np.savetxt(outfile, Z)
         if return_data:
            return [(C[0],C[1]) for C in Z]
+
+
+class CurveEnumeratorShortWeierstrass(CurveEnumerator):
+    """
+    Short Weierstrass Family
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumeratorFullWeierstrass(CurveEnumerator):
+    """
+    Short Weierstrass Family
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumeratorRankOne(CurveEnumerator):
+    """
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumeratorRankTwo(CurveEnumerator):
+    """
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumeratorTwoTorsion(CurveEnumerator):
+    """
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumeratorThreeTorsion(CurveEnumerator):
+    """
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumeratorF_12(CurveEnumerator):
+    """
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumeratorF_13(CurveEnumerator):
+    """
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumeratorF_14(CurveEnumerator):
+    """
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumeratorF_12x2(CurveEnumerator):
+    """
+    """
+    raise NotImplementedError()
+
+
+class CurveEnumeratorF_22(CurveEnumerator):
+    """
+    """
+    raise NotImplementedError()
