@@ -469,7 +469,7 @@ class CurveEnumerator_abstract(object):
         return L2
 
     def coefficients_over_height_range(self, lowerbound, upperbound,\
-                                       savefile=None, return_data=True):
+                                       output_filename=None, return_data=True):
         """
         Return all a-invariant tuples of elliptic curves over a given
          height range, bounds inclusive.
@@ -477,19 +477,29 @@ class CurveEnumerator_abstract(object):
         INPUT:
 
         - ``lowerbound``  -- The lower height bound
+
         - ``upperbound``  -- The upper height bound
-        - ``savefile``    -- String: the name of a file to which the
-          output will be saved. Each line of the save file describes
-          a single curve, and consists of six tab-separated integers;
-          the first is the height of the curve, and the following five
-          its a-invariants.
+
+        - ``output_filename`` -- (Default None): If not None, the string
+          name of a file to which the output will be saved.
+
         - ``return_data`` -- (Default: True) If False, the computed
           data will not be returned.
 
         OUTPUT:
 
-        A list of tuples, each consisting of a height and a tuple of
-        a-invariants defining an elliptic curve over Q of that height.
+        If specified, the output is written to file. Each line specifies
+        a single curve, and consists of six tab-separated integers in the
+        format
+        H  a1  a2  a3  a4  a6
+        H: The height of the curve
+        a1..a6: The a-invariants of the curve
+        Curves will be ordered by increasing height.
+
+        If return_data==True, the output is returned in the form of a
+        list of tuples. Each tuple is of the form
+        (H, [a1,a2,a3,a4,a6])
+        where H and a1..a6 are as above.
         The list will be ordered by increasing height.
 
         EXAMPLES::
@@ -520,7 +530,7 @@ class CurveEnumerator_abstract(object):
         #WAS: maybe leave in, but use consistent naming, e.g., output_filename...
         
         # Save data to file
-        if savefile is not None:
+        if output_filename is not None:
             out_file  = open(savefile,"w")
             for C in L:
                 out_file.write(str(C[0])+"\t")
@@ -555,10 +565,8 @@ class CurveEnumerator_abstract(object):
 
 
     #WAS: make output_filename (etc.) optional
-    def rank(self, curves, output_filename="rank_output.txt",\
-             problems_filename="rank_problems.txt",\
-             return_data=True, use_database=True, use_only_mwrank=False,\
-             print_timing=True):
+    def rank(self, curves, output_filename=None,problems_filename=None, \
+             return_data=True, print_timing=True, **rank_opts):
         r"""
         Compute the algebraic rank for a list of curves ordered by height.
 
@@ -571,44 +579,37 @@ class CurveEnumerator_abstract(object):
           H is the height of the curve, and
           [a1,...,a6] the curve's a-invariants
 
-        - ``output_filename``   -- String, the name of the file to which the
-          output will be saved. Each line of the save file describes a
-          single curve, and consists of seven tab-separated integers:
-          the first is the height of the curve; the following five are
-          the curve's a-invariants, and the final integer is the curve's rank.
+        - ``output_filename``   -- (Default None): If not None, the string name
+          of the file to which the output will be saved.
 
-        - ``problems_filename`` -- String: the file name to which problem
-          curves will be written. These are curves for which rank could not
-          be computed. Write format is the same as above, except rank is
-          omitted at the end.
+        - ``problems_filename`` -- (Default None): If not None, the string name
+          of the file to which problem curves will be written.
 
         - ``return_data``       -- (Default True): If set to False, the data
           is not returned at the end of computation; only written to file.
 
-#WAS: maybe use_cremonadb?  what about other databases?
-            - ``use_database``      -- (Default True): If set to False, the 
-              Cremona database is not used to look up curve ranks.
-#WAS: better yet use **...
-(..., **rank_opts)
-.rank(..., **rank_opts)
-
-        - ``use_only_mwrank``   -- (Default False): If set to True, will not
-          try to use analytic methods to compute rank before consulting the
-          Cremona database
-
         - ``print_timing``      -- (Default True): If set to False, wall time
           of total computation will not be printed.
 
+        Additional arguments are passed to the rank() method of the EllipticCurve
+        class.
+
         OUTPUT:
 
-        Writes data to file. Each line of the written file consists of seven
-        tab separated entries of the form
+        If specified, writes computed data to file. Each line of the written file
+        consists of seven tab separated entries of the form
         H  a1  a2  a3  a4  a6  d
         1. H is the curve's height
         2. a1,...,a6 are the curve's a-invariants
         3. d is the computed datum for that curve
 
-        (only if return_data==True) A list consisting of two lists:
+        If specified, writes problem curves to file. Each line of the written file
+        consists of seven tab separated entries of the form
+        H  a1  a2  a3  a4  a6
+        1. H is the curve's height
+        2. a1,...,a6 are the curve's a-invariants
+
+        If return_data==True:  A list consisting of two lists is returned:
         The first is a list of triples of the form
         (H, (a1,a2,a3,a4,a6), d)
         where the entries are as above.
@@ -642,44 +643,54 @@ class CurveEnumerator_abstract(object):
         if print_timing:
             t = time.time()
 
-        out_file  = open(output_filename,"w")
-        prob_file = open(problems_filename,"w")
+        if output_filename is not None:
+            out_file  = open(output_filename,"w")
+        if problems_filename is not None:
+            prob_file = open(problems_filename,"w")
         if return_data:
             output = []
             problems = []
+        
         for C in curves:
             # Attempt to compute rank and write curve+rank to file
             try:
                 E = EllipticCurve(C[1])
                 d = E.rank(use_database=use_database,only_use_mwrank=use_only_mwrank)
-                out_file.write(str(C[0])+"\t")
-                for a in C[1]:
-                    out_file.write(str(a)+"\t")
-                out_file.write(str(d)+"\n")
-                out_file.flush()
+
+                if output_filename is not None:
+                    out_file.write(str(C[0])+"\t")
+                    for a in C[1]:
+                        out_file.write(str(a)+"\t")
+                    out_file.write(str(d)+"\n")
+                    out_file.flush()
 
                 if return_data:
                     output.append((C[0],C[1],d))
-            # Write to problem file if fail
+
+            # Write to problem file or append to problems list if fail
             except:
-                prob_file.write(str(C[0])+"\t")
-                for a in C[1]:
-                    prob_file.write(str(a)+"\t")
-                prob_file.write("\n")
-                prob_file.flush()
+                if problems_filename is not None:
+                    prob_file.write(str(C[0])+"\t")
+                    for a in C[1]:
+                        prob_file.write(str(a)+"\t")
+                    prob_file.write("\n")
+                    prob_file.flush()
 
                 if return_data:
                     problems.append(C)
-        out_file.close()
-        prob_file.close()
+
+        if output_filename is not None:
+            out_file.close()
+        if problems_filename is not None:
+            prob_file.close()
 
         if print_timing:
             print(time.time()-t)
         if return_data:
             return output,problems
 
-    def two_selmer(self, curves,rank=True, reduced=False,
-                   output_filename="rank_output.txt", problems_filename="rank_problems.txt",\
+    def two_selmer(self, curves, rank=True, reduced=False,
+                   output_filename=None, problems_filename=None, \
                    return_data=True, print_timing=True):
         r"""
         Compute rank or size of two-Selmer for a list of curves ordered by height.
@@ -703,15 +714,11 @@ class CurveEnumerator_abstract(object):
           2^(2-Selmer rank - 2-torsion rank) as per whether 'rank' is set to
           True or False) is computed.
 
-        - ``output_filename``   -- String, the name of the file to which the
-          output will be saved. Each line of the save file describes a
-          single curve, and consists of seven tab-separated integers:
-          the first is the height of the curve; the following five are
-          the curve's a-invariants, and the final integer is the curve's rank.
-        - ``problems_filename`` -- String: the file name to which problem
-          curves will be written. These are curves for which rank could not
-          be computed. Write format is the same as above, except rank is
-          omitted at the end.
+          - ``output_filename``   -- (Default None): If not None, the string
+          name of the file to which the output will be saved.
+
+        - ``problems_filename`` -- (Default None): If not None, the string name
+          of the file to which problem curves will be written.
 
         - ``return_data``       -- (Default True): If set to False, the data
           is not returned at the end of computation; only written to file.
@@ -778,11 +785,14 @@ class CurveEnumerator_abstract(object):
         if print_timing:
             t = time.time()
 
-        out_file  = open(output_filename,"w")
-        prob_file = open(problems_filename,"w")
+        if output_filename is not None:
+            out_file  = open(output_filename,"w")
+        if problems_filename is not None:
+            prob_file = open(problems_filename,"w")
         if return_data:
             output = []
             problems = []
+
         for C in curves:
             # Attempt to compute datum and write curve+datum to file
             try:
@@ -794,26 +804,32 @@ class CurveEnumerator_abstract(object):
                 if not rank:
                     d = 2**d
 
-                out_file.write(str(C[0])+"\t")
-                for a in C[1]:
-                    out_file.write(str(a)+"\t")
-                out_file.write(str(d)+"\n")
-                out_file.flush()
+                if output_filename is not None:
+                    out_file.write(str(C[0])+"\t")
+                    for a in C[1]:
+                        out_file.write(str(a)+"\t")
+                    out_file.write(str(d)+"\n")
+                    out_file.flush()
 
                 if return_data:
                     output.append((C[0],C[1],d))
+
             # Write to problem file if fail
             except:
-                prob_file.write(str(C[0])+"\t")
-                for a in C[1]:
-                    prob_file.write(str(a)+"\t")
-                prob_file.write("\n")
-                prob_file.flush()
+                if problems_filename is not None:
+                    prob_file.write(str(C[0])+"\t")
+                    for a in C[1]:
+                        prob_file.write(str(a)+"\t")
+                    prob_file.write("\n")
+                    prob_file.flush()
 
                 if return_data:
                     problems.append(C)
-        out_file.close()
-        prob_file.close()
+
+        if output_filename is not None:
+            out_file.close()
+        if problems_filename is not None:
+            prob_file.close()
 
         if print_timing:
             print(time.time()-t)
@@ -821,7 +837,7 @@ class CurveEnumerator_abstract(object):
             return output,problems
 
 
-    def averaged_data(self, input, outfile="average_data.txt", return_data=True):
+    def averaged_data(self, input, output_filename=None, return_data=True):
         """
         INPUT:
 
@@ -834,18 +850,20 @@ class CurveEnumerator_abstract(object):
           H, a1, a2, a3, a4, a6, d
           where the elements are as above
 
-        - ``outfile`` -- String: The name of the output file
-        - ``return_data`` -- (Default: True) If set to False, the computed
+        - ``output_filename`` -- (Default None): If not None, the string name
+          of the file to which computed averaged data will be written
+
+        - ``return_data`` -- (Default True): If set to False, the computed
           data is not returned.
 
         OUTPUT:
         
-        Writes the averaged data to file, where the two tab-separated elements
-        of each line are of the form
+        If specified, writes the averaged data to file, where the two
+        tab-separated elements of each line are of the form
         H  a
         where H is height, and a the average datum up to that height
         
-        (only if return_data==True) returns a list of tuples of the form
+        If return_data==True, returns a list of tuples of the form
         (H, a)
         where H is height, and a the average datum up to that height
 
@@ -880,9 +898,10 @@ class CurveEnumerator_abstract(object):
 
         # Save, return output
         Z = np.vstack([X[I],Y[I,:].T]).T
-        np.savetxt(outfile, Z)
+        if output_filename is not None:
+            np.savetxt(output_filname, Z)
         if return_data:
-           return [(C[0],C[1]) for C in Z]
+            return [(C[0],C[1]) for C in Z]
 
 
 class CurveEnumeratorShortWeierstrass(CurveEnumerator_abstract):
