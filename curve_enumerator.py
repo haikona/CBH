@@ -29,6 +29,7 @@ from sage.functions.other import floor,ceil
 from sage.combinat.cartesian_product import CartesianProduct
 from sage.misc.misc import powerset, srange
 from sage.schemes.elliptic_curves.constructor import EllipticCurve
+from sage.rings.arith import valuation
 
 
 class CurveEnumerator_abstract(object):
@@ -480,13 +481,11 @@ class CurveEnumerator_abstract(object):
           Riemann Hypothesis will not be assumed in the computing
           of class group bounds in Magma (and thus will be
           slower); if True, GRH will be assumed and computation
-          will eb quicker.
-
-        EXAMPLES::
+          will be quicker.
         """
+        from sage.interfaces.all import magma
+
         if proof == False:
-            #WAS: this can't work since "magma" is not in scope.
-            #from sage.interfaces.all import magma...
             magma.eval('SetClassGroupBounds("GRH")')
         else:
             magma.eval('SetClassGroupBounds("PARI")')
@@ -513,7 +512,7 @@ class CurveEnumerator_abstract(object):
           of the file to which problem curves will be written.
 
         - ``return_data``       -- (Default True): If set to False, the data
-          is not returned at the end of computation; only written to file.
+          is not returned at the end of computation.
 
         - ``print_timing``      -- (Default True): If set to False, wall time
           of total computation will not be printed.
@@ -649,7 +648,7 @@ class CurveEnumerator_abstract(object):
           of the file to which problem curves will be written.
 
         - ``return_data``       -- (Default True): If set to False, the data
-          is not returned at the end of computation; only written to file.
+          is not returned at the end of computation.
 
         - ``print_timing``      -- (Default True): If set to False, wall time
           of total computation will not be printed.
@@ -675,34 +674,34 @@ class CurveEnumerator_abstract(object):
 
             sage: C = EllipticCurveEnumerator(family="short_weierstrass")
             sage: L = C.coefficients_over_height_range(4,4)
-            sage: R = C.two_selmer(L,rank=True,return_data=True,print_timing=False)
-            sage: R[1]
+            sage: R,P = C.two_selmer(L,rank=True,return_data=True,print_timing=False)
+            sage: P
             []
-            sage: for r in R[0]: print(r)
+            sage: for r in R: print(r)
             (4, [0, 0, 0, -1, -2], 1)
             (4, [0, 0, 0, -1, 2], 0)
             (4, [0, 0, 0, 0, -2], 1)
             (4, [0, 0, 0, 0, 2], 1)
             (4, [0, 0, 0, 1, -2], 1)
             (4, [0, 0, 0, 1, 2], 1)
-            sage: R = C.two_selmer(L,rank=False,return_data=True,print_timing=False)
-            sage: for r in R[0]: print(r)
+            sage: R,P = C.two_selmer(L,rank=False,return_data=True,print_timing=False)
+            sage: for r in R: print(r)
             (4, [0, 0, 0, -1, -2], 2)
             (4, [0, 0, 0, -1, 2], 1)
             (4, [0, 0, 0, 0, -2], 2)
             (4, [0, 0, 0, 0, 2], 2)
             (4, [0, 0, 0, 1, -2], 2)
             (4, [0, 0, 0, 1, 2], 2)
-            sage: R = C.two_selmer(L,reduced=True,print_timing=False)
-            sage: for r in R[0]: print(r)
+            sage: R,P = C.two_selmer(L,reduced=True,print_timing=False)
+            sage: for r in R: print(r)
             (4, [0, 0, 0, -1, -2], 1)
             (4, [0, 0, 0, -1, 2], 0)
             (4, [0, 0, 0, 0, -2], 1)
             (4, [0, 0, 0, 0, 2], 1)
             (4, [0, 0, 0, 1, -2], 0)
             (4, [0, 0, 0, 1, 2], 0)
-            sage: R = C.two_selmer(L,rank=False,reduced=True,print_timing=False)
-            sage: for r in R[0]: print(r)
+            sage: R,P = C.two_selmer(L,rank=False,reduced=True,print_timing=False)
+            sage: for r in R: print(r)
             (4, [0, 0, 0, -1, -2], 2)
             (4, [0, 0, 0, -1, 2], 1)
             (4, [0, 0, 0, 0, -2], 2)
@@ -732,6 +731,414 @@ class CurveEnumerator_abstract(object):
                 if not rank:
                     d = 2**d
 
+                if output_filename is not None:
+                    out_file.write(str(C[0])+"\t")
+                    for a in C[1]:
+                        out_file.write(str(a)+"\t")
+                    out_file.write(str(d)+"\n")
+                    out_file.flush()
+
+                if return_data:
+                    output.append((C[0],C[1],d))
+
+            # Write to problem file if fail
+            except:
+                if problems_filename is not None:
+                    prob_file.write(str(C[0])+"\t")
+                    for a in C[1]:
+                        prob_file.write(str(a)+"\t")
+                    prob_file.write("\n")
+                    prob_file.flush()
+
+                if return_data:
+                    problems.append(C)
+
+        if output_filename is not None:
+            out_file.close()
+        if problems_filename is not None:
+            prob_file.close()
+
+        if print_timing:
+            print(time.time()-t)
+        if return_data:
+            return output,problems
+
+    def two_torsion(self, curves, rank=True,
+                   output_filename=None, problems_filename=None, \
+                   return_data=True, print_timing=True):
+        r"""
+        Compute rank or size of two-torsion groups for a list of curves ordered by height.
+
+        INPUT:
+ 
+        - ``curves``            -- A list of (height,a-invariant) tuples of
+          curves, as returned by the coefficients_over_height_range() method.
+          Each tuple is of the form
+          (H, [a1,a2,a3,a4,a6]) where
+          H is the height of the curve, and
+          [a1,...,a6] the curve's a-invariants
+
+        - ``rank``              -- (Default True) Compute the rank versus size
+          of the curve's 2-torsion group. If True, rank is computed; if set to
+          False size (i.e. 2^rank) is computed instead.
+
+          - ``output_filename``   -- (Default None): If not None, the string
+          name of the file to which the output will be saved.
+
+        - ``problems_filename`` -- (Default None): If not None, the string name
+          of the file to which problem curves will be written.
+
+        - ``return_data``       -- (Default True): If set to False, the data
+          is not returned at the end of computation.
+
+        - ``print_timing``      -- (Default True): If set to False, wall time
+          of total computation will not be printed.
+
+        OUTPUT:
+
+         Writes data to file. Each line of the written file consists of seven
+         tab separated entries of the form
+         H, a1, a2, a3, a4, a6, d
+         H: The curve's height
+         a1,...,a6: The curve's a-invariants
+         d: The computed datum for that curve
+
+         (only if return_data==True) A list consisting of two lists:
+         The first is a list of triples of the form
+         (H, (a1,a2,a3,a4,a6), d)
+         where the entries are as above.
+         The second is a list of curve for which the datum could not be provably
+         computed; each entry of this list is just a pair consisting of height
+         and a-invariants.
+
+        EXAMPLES::
+
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
+            sage: L = C.coefficients_over_height_range(4,4)
+            sage: R,P = C.two_torsion(L,rank=True,return_data=True,print_timing=False)
+            sage: P
+            []
+            sage: for r in R: print(r)
+            (4, [0, 0, 0, -1, -2], 0)
+            (4, [0, 0, 0, -1, 2], 0)
+            (4, [0, 0, 0, 0, -2], 0)
+            (4, [0, 0, 0, 0, 2], 0)
+            (4, [0, 0, 0, 1, -2], 1)
+            (4, [0, 0, 0, 1, 2], 1)
+            sage: R,P = C.two_torsion(L,rank=False,return_data=True,print_timing=False)
+            sage: for r in R: print(r)
+            (4, [0, 0, 0, -1, -2], 1)
+            (4, [0, 0, 0, -1, 2], 1)
+            (4, [0, 0, 0, 0, -2], 1)
+            (4, [0, 0, 0, 0, 2], 1)
+            (4, [0, 0, 0, 1, -2], 2)
+            (4, [0, 0, 0, 1, 2], 2)
+        """
+        if print_timing:
+            t = time.time()
+
+        if output_filename is not None:
+            out_file  = open(output_filename,"w")
+        if problems_filename is not None:
+            prob_file = open(problems_filename,"w")
+        if return_data:
+            output = []
+            problems = []
+
+        for C in curves:
+            # Attempt to compute datum and write curve+datum to file
+            try:
+                E = EllipticCurve(C[1])
+
+                d = E.two_torsion_rank()
+                if not rank:
+                    d = 2**d
+
+                if output_filename is not None:
+                    out_file.write(str(C[0])+"\t")
+                    for a in C[1]:
+                        out_file.write(str(a)+"\t")
+                    out_file.write(str(d)+"\n")
+                    out_file.flush()
+
+                if return_data:
+                    output.append((C[0],C[1],d))
+
+            # Write to problem file if fail
+            except:
+                if problems_filename is not None:
+                    prob_file.write(str(C[0])+"\t")
+                    for a in C[1]:
+                        prob_file.write(str(a)+"\t")
+                    prob_file.write("\n")
+                    prob_file.flush()
+
+                if return_data:
+                    problems.append(C)
+
+        if output_filename is not None:
+            out_file.close()
+        if problems_filename is not None:
+            prob_file.close()
+
+        if print_timing:
+            print(time.time()-t)
+        if return_data:
+            return output,problems
+
+
+    def n_torsion(self, curves, n, rank=True,
+                   output_filename=None, problems_filename=None, \
+                   return_data=True, print_timing=True):
+        r"""
+        Compute size of torsion groups for a list of curves ordered by height;
+        or compute the size of n-torsion of the curves;
+        or compute the rank of n-torsion of the curves.
+
+        INPUT:
+ 
+        - ``curves``            -- A list of (height,a-invariant) tuples of
+          curves, as returned by the coefficients_over_height_range() method.
+          Each tuple is of the form
+          (H, [a1,a2,a3,a4,a6]) where
+          H is the height of the curve, and
+          [a1,...,a6] the curve's a-invariants
+
+        - ``n``                 -- The n for which the rank/size of the n-torsion
+          subgroup will be computed
+
+        - ``rank``              -- (Default True): Compute the rank versus size
+          of the curve's torsion/n-torsion subgroup. If True, the n-torsion rank
+          is computed (i.e. 0, 1 or 2). If set to False, the size of the n-torsion
+          subgroup is computed instead (i.e. n^rank)
+
+          - ``output_filename`` -- (Default None): If not None, the string
+          name of the file to which the output will be saved.
+
+        - ``problems_filename`` -- (Default None): If not None, the string name
+          of the file to which problem curves will be written.
+
+        - ``return_data``       -- (Default True): If set to False, the data
+          is not returned at the end of computation.
+
+        - ``print_timing``      -- (Default True): If set to False, wall time
+          of total computation will not be printed.
+
+        OUTPUT:
+
+         Writes data to file. Each line of the written file consists of seven
+         tab separated entries of the form
+         H, a1, a2, a3, a4, a6, d
+         H: The curve's height
+         a1,...,a6: The curve's a-invariants
+         d: The computed datum for that curve
+
+         (only if return_data==True) A list consisting of two lists:
+         The first is a list of triples of the form
+         (H, (a1,a2,a3,a4,a6), d)
+         where the entries are as above.
+         The second is a list of curve for which the datum could not be provably
+         computed; each entry of this list is just a pair consisting of height
+         and a-invariants.
+
+        EXAMPLES::
+
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
+            sage: L = C.coefficients_over_height_range(1,1)
+            sage: R,P = C.n_torsion(L,n=3,rank=True,return_data=True,print_timing=False)
+            sage: P
+            []
+            sage: for r in R: print(r)
+            (1, [0, 0, 0, -1, 0], 0)
+            (1, [0, 0, 0, 1, 0], 0)
+            (1, [0, 0, 0, 0, -1], 0)
+            (1, [0, 0, 0, 0, 1], 1)
+            (1, [0, 0, 0, -1, -1], 0)
+            (1, [0, 0, 0, -1, 1], 0)
+            (1, [0, 0, 0, 1, -1], 0)
+            (1, [0, 0, 0, 1, 1], 0)
+            sage: R,P = C.n_torsion(L,n=3,rank=False,return_data=True,print_timing=False)
+            sage: for r in R: print(r)
+            (1, [0, 0, 0, -1, 0], 1)
+            (1, [0, 0, 0, 1, 0], 1)
+            (1, [0, 0, 0, 0, -1], 1)
+            (1, [0, 0, 0, 0, 1], 3)
+            (1, [0, 0, 0, -1, -1], 1)
+            (1, [0, 0, 0, -1, 1], 1)
+            (1, [0, 0, 0, 1, -1], 1)
+            (1, [0, 0, 0, 1, 1], 1)
+            sage: R,P = C.n_torsion(L,n=6,rank=False,return_data=True,print_timing=False)
+            sage: for r in R: print(r)
+            (1, [0, 0, 0, -1, 0], 1)
+            (1, [0, 0, 0, 1, 0], 1)
+            (1, [0, 0, 0, 0, -1], 1)
+            (1, [0, 0, 0, 0, 1], 6)
+            (1, [0, 0, 0, -1, -1], 1)
+            (1, [0, 0, 0, -1, 1], 1)
+            (1, [0, 0, 0, 1, -1], 1)
+            (1, [0, 0, 0, 1, 1], 1)
+        """
+        assert n>0, "n must be a positive integer."
+
+        # Use self.two_torsion() for n=2
+        if n==2:
+            return self.two_torsion(curves,rank=rank,output_filename=output_filename, \
+                                    problems_filename=problems_filename, \
+                                    return_data=return_data,print_timing=print_timing)
+
+        if print_timing:
+            t = time.time()
+
+        if output_filename is not None:
+            out_file  = open(output_filename,"w")
+        if problems_filename is not None:
+            prob_file = open(problems_filename,"w")
+        if return_data:
+            output = []
+            problems = []
+
+        for C in curves:
+            # Attempt to compute datum and write curve+datum to file
+            try:
+                E = EllipticCurve(C[1])
+
+#####THIS REQUIRES CHECKING#####
+                # Compute datum
+                # By Mazur's Torsion Theorem, the possible torsion subgroups
+                # for curves over Q are C1 thru C10, and C2xC2, C2xC4, C2xC6
+                # and C2xC8, where Cm is the cyclic group of order m.
+                d = E.torsion_order()
+                t = E.two_torsion_rank()
+                if t==2: d = d/2
+                if n.divides(d):
+                    # The only n for which E may have full n-torsion is 2,
+                    # which is covered by self.two_torsion()
+                    d = 1
+                    if rank==False:
+                        d = n
+                        # If n is even and the curve has full 2-torsion,
+                        # there are twice as many points of order n
+                        if t==2 and n%2==0:
+                            d = 2*d
+                # Boring case: no n-torsion
+                else:
+                    d = 0
+                    if rank==False:
+                        d = 1
+#####
+
+                # Write to file and/or append to return list
+                if output_filename is not None:
+                    out_file.write(str(C[0])+"\t")
+                    for a in C[1]:
+                        out_file.write(str(a)+"\t")
+                    out_file.write(str(d)+"\n")
+                    out_file.flush()
+
+                if return_data:
+                    output.append((C[0],C[1],d))
+
+            # Write to problem file if fail
+            except:
+                if problems_filename is not None:
+                    prob_file.write(str(C[0])+"\t")
+                    for a in C[1]:
+                        prob_file.write(str(a)+"\t")
+                    prob_file.write("\n")
+                    prob_file.flush()
+
+                if return_data:
+                    problems.append(C)
+
+        if output_filename is not None:
+            out_file.close()
+        if problems_filename is not None:
+            prob_file.close()
+
+        if print_timing:
+            print(time.time()-t)
+        if return_data:
+            return output,problems
+
+
+    def torsion_order(self, curves, output_filename=None, problems_filename=None, \
+                      return_data=True, print_timing=True):
+        r"""
+        Compute size of the torsion subgroups of a list of curves ordered by height.
+
+        INPUT:
+ 
+        - ``curves``            -- A list of (height,a-invariant) tuples of
+          curves, as returned by the coefficients_over_height_range() method.
+          Each tuple is of the form
+          (H, [a1,a2,a3,a4,a6]) where
+          H is the height of the curve, and
+          [a1,...,a6] the curve's a-invariants
+
+          - ``output_filename`` -- (Default None): If not None, the string
+          name of the file to which the output will be saved.
+
+        - ``problems_filename`` -- (Default None): If not None, the string name
+          of the file to which problem curves will be written.
+
+        - ``return_data``       -- (Default True): If set to False, the data
+          is not returned at the end of computation.
+
+        - ``print_timing``      -- (Default True): If set to False, wall time
+          of total computation will not be printed.
+
+        OUTPUT:
+
+         Writes data to file. Each line of the written file consists of seven
+         tab separated entries of the form
+         H, a1, a2, a3, a4, a6, d
+         H: The curve's height
+         a1,...,a6: The curve's a-invariants
+         d: The computed datum for that curve
+
+         (only if return_data==True) A list consisting of two lists:
+         The first is a list of triples of the form
+         (H, (a1,a2,a3,a4,a6), d)
+         where the entries are as above.
+         The second is a list of curve for which the datum could not be provably
+         computed; each entry of this list is just a pair consisting of height
+         and a-invariants.
+
+        EXAMPLES::
+
+            sage: C = EllipticCurveEnumerator(family="short_weierstrass")
+            sage: L = C.coefficients_over_height_range(1,1)
+            sage: R,P = C.torsion_order(L,return_data=True,print_timing=False)
+            sage: P
+            []
+            sage: for r in R: print(r)
+            (1, [0, 0, 0, -1, 0], 4)
+            (1, [0, 0, 0, 1, 0], 2)
+            (1, [0, 0, 0, 0, -1], 2)
+            (1, [0, 0, 0, 0, 1], 6)
+            (1, [0, 0, 0, -1, -1], 1)
+            (1, [0, 0, 0, -1, 1], 1)
+            (1, [0, 0, 0, 1, -1], 1)
+            (1, [0, 0, 0, 1, 1], 1)
+        """
+        if print_timing:
+            t = time.time()
+
+        if output_filename is not None:
+            out_file  = open(output_filename,"w")
+        if problems_filename is not None:
+            prob_file = open(problems_filename,"w")
+        if return_data:
+            output = []
+            problems = []
+
+        for C in curves:
+            # Attempt to compute datum and write curve+datum to file
+            try:
+                E = EllipticCurve(C[1])
+                d = E.torsion_order()
+
+                # Write to file and/or append to return list
                 if output_filename is not None:
                     out_file.write(str(C[0])+"\t")
                     for a in C[1]:
@@ -1355,7 +1762,7 @@ class CurveEnumeratorF_14(CurveEnumerator_abstract):
         A = (2*(w0**2+w1**2+w2**2+w3**2) - (w0+w1+w2+w3)**2)/4
         B = w0*w1*w2*w3
 
-        # Note: Need to convert to integral a-invariants if not integral
+        # Note: coefficients may not be integral
 
         return [0,A,0,0,B]
 
@@ -1427,6 +1834,8 @@ class CurveEnumeratorF_12x2(CurveEnumerator_abstract):
         A = (2*(w0**2+w1**2+w2**2+w3**2) - (w0+w1+w2+w3)**2)/4
         B = w0*w1*w2*w3
 
+        # WARNING: Coefficients can be non-integral
+
         return [0,A,0,0,B]
 
 
@@ -1494,6 +1903,8 @@ class CurveEnumeratorF_22(CurveEnumerator_abstract):
         w0,w1,w2,w3 = c[0],c[1],c[2],c[3]
         A = (2*(w0**2+w1**2+w2**2+w3**2) - (w0+w1+w2+w3)**2)/4
         B = w0*w1*w2*w3
+
+        # WARNING: Coefficients can be non-integral
 
         return [0,A,0,0,B]
 
